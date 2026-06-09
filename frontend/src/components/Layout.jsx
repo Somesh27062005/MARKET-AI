@@ -114,14 +114,14 @@ export default function Layout({ children, user, onLogout }) {
                 key={item.path}
                 to={item.path}
                 className={({ isActive }) => `
-                  flex items-center px-4 py-3 rounded-2xl transition-all duration-300 font-medium text-sm group/link w-full
+                  flex items-center justify-center group-hover:justify-start px-0 group-hover:px-4 py-3 rounded-2xl transition-all duration-300 font-medium text-sm group/link w-full
                   ${isActive 
                     ? 'bg-indigo-600/20 text-indigo-400 shadow-inner' 
                     : 'text-gray-400 hover:text-indigo-400 hover:bg-white/5'}
                 `}
               >
                 <Icon className={`w-5 h-5 shrink-0 transition-transform duration-300 group-hover/link:scale-110 ${isActive ? 'text-indigo-400' : 'text-gray-400 group-hover:text-indigo-400'}`} />
-                <span className="opacity-0 w-0 scale-95 group-hover:opacity-100 group-hover:w-auto group-hover:scale-100 transition-all duration-300 ml-3 overflow-hidden whitespace-nowrap">
+                <span className="opacity-0 w-0 scale-95 group-hover:opacity-100 group-hover:w-auto group-hover:scale-100 transition-all duration-300 group-hover:ml-3 ml-0 overflow-hidden whitespace-nowrap">
                   {item.name}
                 </span>
               </NavLink>
@@ -130,12 +130,12 @@ export default function Layout({ children, user, onLogout }) {
         </nav>
 
         {/* Sidebar Footer User Info */}
-        <div className="p-4 border-t border-white/5 bg-surface-900/40 flex items-center justify-center group-hover:justify-between rounded-b-[2rem] transition-all duration-300 shrink-0">
+        <div className="py-4 px-0 group-hover:px-6 border-t border-white/5 bg-surface-900/40 flex items-center justify-center group-hover:justify-between rounded-b-[2rem] transition-all duration-300 shrink-0">
           <div className="flex items-center">
             <div className="w-10 h-10 rounded-full bg-indigo-600/30 border border-indigo-500/20 flex items-center justify-center font-display font-semibold text-indigo-400 shrink-0">
               {user.avatar || user.name?.[0]?.toUpperCase() || 'U'}
             </div>
-            <div className="opacity-0 w-0 scale-95 group-hover:opacity-100 group-hover:w-32 group-hover:scale-100 transition-all duration-300 ml-3 overflow-hidden whitespace-nowrap flex flex-col justify-center">
+            <div className="opacity-0 w-0 scale-95 group-hover:opacity-100 group-hover:w-32 group-hover:scale-100 transition-all duration-300 group-hover:ml-3 ml-0 overflow-hidden whitespace-nowrap flex flex-col justify-center">
               <p className="text-sm font-medium text-white truncate leading-tight">{user.name}</p>
               <p className="text-xs text-gray-500 truncate leading-none mt-1">{user.email}</p>
             </div>
