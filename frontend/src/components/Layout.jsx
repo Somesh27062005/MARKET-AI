@@ -91,21 +91,21 @@ export default function Layout({ children, user, onLogout }) {
       <div className="absolute top-[-20%] left-[-10%] w-[60%] h-[60%] rounded-full bg-indigo-500/5 blur-[120px] pointer-events-none animate-float"></div>
       <div className="absolute bottom-[-20%] right-[-10%] w-[60%] h-[60%] rounded-full bg-cyan-500/5 blur-[120px] pointer-events-none animate-float-delayed"></div>
 
-      {/* Sidebar */}
-      <aside className="w-64 bg-surface-800/80 border-r border-white/5 flex flex-col z-20 backdrop-blur-xl">
+      {/* Sidebar - Unique Floating Collapsible Dock */}
+      <aside className="fixed left-5 top-5 bottom-5 w-20 hover:w-64 bg-surface-800/80 border border-white/10 flex flex-col z-30 backdrop-blur-xl rounded-[2rem] shadow-2xl transition-all duration-300 ease-out group">
         {/* Logo Section */}
-        <div className="p-6 flex items-center space-x-3 border-b border-white/5">
-          <div className="w-10 h-10 rounded-xl bg-indigo-600 flex items-center justify-center shadow-lg shadow-indigo-600/30">
+        <div className="p-4 flex items-center justify-center group-hover:justify-start group-hover:px-6 border-b border-white/5 h-20 transition-all duration-300 shrink-0">
+          <div className="w-12 h-12 rounded-2xl bg-indigo-600 flex items-center justify-center shadow-lg shadow-indigo-600/30 shrink-0">
             <Flame className="w-6 h-6 text-white animate-pulse" />
           </div>
-          <div>
+          <div className="opacity-0 w-0 scale-95 group-hover:opacity-100 group-hover:w-auto group-hover:scale-100 transition-all duration-300 ml-3 overflow-hidden whitespace-nowrap">
             <h1 className="text-lg font-display font-bold text-white tracking-wide leading-none">MarketMind</h1>
             <span className="text-xs text-indigo-400 font-medium tracking-widest uppercase">Intelligence</span>
           </div>
         </div>
 
         {/* Navigation */}
-        <nav className="flex-1 px-4 py-6 space-y-1 overflow-y-auto custom-scrollbar">
+        <nav className="flex-1 px-3 py-6 space-y-1 overflow-y-auto custom-scrollbar">
           {navItems.map((item) => {
             const Icon = item.icon;
             const isActive = location.pathname === item.path;
@@ -114,26 +114,28 @@ export default function Layout({ children, user, onLogout }) {
                 key={item.path}
                 to={item.path}
                 className={({ isActive }) => `
-                  flex items-center space-x-3 px-4 py-3 rounded-xl transition-all duration-300 font-medium text-sm group
+                  flex items-center px-4 py-3 rounded-2xl transition-all duration-300 font-medium text-sm group/link w-full
                   ${isActive 
-                    ? 'bg-indigo-600/20 text-white border-l-4 border-indigo-500 shadow-inner' 
-                    : 'text-gray-400 hover:text-white hover:bg-white/5'}
+                    ? 'bg-indigo-600/20 text-indigo-400 shadow-inner' 
+                    : 'text-gray-400 hover:text-indigo-400 hover:bg-white/5'}
                 `}
               >
-                <Icon className={`w-5 h-5 transition-transform duration-300 group-hover:scale-110 ${isActive ? 'text-indigo-400' : 'text-gray-400 group-hover:text-white'}`} />
-                <span>{item.name}</span>
+                <Icon className={`w-5 h-5 shrink-0 transition-transform duration-300 group-hover/link:scale-110 ${isActive ? 'text-indigo-400' : 'text-gray-400 group-hover:text-indigo-400'}`} />
+                <span className="opacity-0 w-0 scale-95 group-hover:opacity-100 group-hover:w-auto group-hover:scale-100 transition-all duration-300 ml-3 overflow-hidden whitespace-nowrap">
+                  {item.name}
+                </span>
               </NavLink>
             );
           })}
         </nav>
 
         {/* Sidebar Footer User Info */}
-        <div className="p-4 border-t border-white/5 bg-surface-900/40 flex items-center justify-between">
-          <div className="flex items-center space-x-3">
-            <div className="w-9 h-9 rounded-full bg-indigo-600/30 border border-indigo-500/20 flex items-center justify-center font-display font-semibold text-indigo-400">
+        <div className="p-4 border-t border-white/5 bg-surface-900/40 flex items-center justify-center group-hover:justify-between rounded-b-[2rem] transition-all duration-300 shrink-0">
+          <div className="flex items-center">
+            <div className="w-10 h-10 rounded-full bg-indigo-600/30 border border-indigo-500/20 flex items-center justify-center font-display font-semibold text-indigo-400 shrink-0">
               {user.avatar || user.name?.[0]?.toUpperCase() || 'U'}
             </div>
-            <div className="truncate w-32">
+            <div className="opacity-0 w-0 scale-95 group-hover:opacity-100 group-hover:w-32 group-hover:scale-100 transition-all duration-300 ml-3 overflow-hidden whitespace-nowrap flex flex-col justify-center">
               <p className="text-sm font-medium text-white truncate leading-tight">{user.name}</p>
               <p className="text-xs text-gray-500 truncate leading-none mt-1">{user.email}</p>
             </div>
@@ -141,7 +143,7 @@ export default function Layout({ children, user, onLogout }) {
           <button 
             onClick={handleLogoutClick}
             title="Log Out"
-            className="p-2 text-gray-500 hover:text-red-400 hover:bg-white/5 rounded-lg transition-colors"
+            className="opacity-0 w-0 scale-95 group-hover:opacity-100 group-hover:w-auto group-hover:scale-100 transition-all duration-300 p-2 text-gray-500 hover:text-red-400 hover:bg-white/5 rounded-xl shrink-0"
           >
             <LogOut className="w-4 h-4" />
           </button>
@@ -149,7 +151,7 @@ export default function Layout({ children, user, onLogout }) {
       </aside>
 
       {/* Main Container */}
-      <div className="flex-1 flex flex-col min-w-0 relative">
+      <div className="flex-1 flex flex-col min-w-0 relative ml-24 transition-all duration-300">
         {/* Header */}
         <header className="h-16 bg-surface-800/40 border-b border-white/5 flex items-center justify-between px-8 z-10 backdrop-blur-xl">
           {/* Workspace Title & Stock Ticker */}
