@@ -1,0 +1,39 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.venv/
+venv/
+env/
+*.egg-info/
+dist/
+build/
+
+# Environment
+.env
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# SQLite Database
+*.db
+marketmind.db
+
+# Log files and log directories
+*.log
+logs/
+backend_stderr.log
+backend/backend_stderr_*.log
+frontend/frontend.log
+
+# Dependencies
+frontend/node_modules/
+
