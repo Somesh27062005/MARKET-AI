@@ -19,16 +19,52 @@ import GlassCard from '../components/GlassCard.jsx';
 import ChatAssistant from '../components/ChatAssistant.jsx';
 
 export default function MarketAnalysis({ getCsrfToken }) {
-  const [industry, setIndustry] = useState('Smart Home Automation');
-  const [productCategory, setProductCategory] = useState('Smart Home Security Systems');
-  const [targetMarket, setTargetMarket] = useState('Residential & Small Commercial Properties');
-  const [competitorsRaw, setCompetitorsRaw] = useState('HomeShield Corp, SafeGuard IoT Systems, Ring');
-  const [timeHorizon, setTimeHorizon] = useState('24 months');
+  const [industry, setIndustry] = useState('');
+  const [productCategory, setProductCategory] = useState('');
+  const [targetMarket, setTargetMarket] = useState('');
+  const [competitorsRaw, setCompetitorsRaw] = useState('');
+  const [timeHorizon, setTimeHorizon] = useState('');
   
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState(null);
   const [activeTab, setActiveTab] = useState('swot');
   const [error, setError] = useState('');
+  const [suggesting, setSuggesting] = useState(false);
+
+  const handleSuggestInputs = async () => {
+    setSuggesting(true);
+    setError('');
+    try {
+      const res = await fetch('/api/v2/suggest_inputs', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-CSRF-Token': getCsrfToken()
+        },
+        body: JSON.stringify({ module: 'market' })
+      });
+      const data = await res.json();
+      if (res.ok) {
+        if (data.success && data.suggestions) {
+          const s = data.suggestions;
+          setIndustry(s.industry || '');
+          setProductCategory(s.productCategory || '');
+          setTargetMarket(s.targetMarket || '');
+          setCompetitorsRaw(s.competitors || '');
+          setTimeHorizon(s.timeHorizon || '');
+        } else {
+          setError(data.error || 'Failed to retrieve suggestions.');
+        }
+      } else {
+        setError(data.error || 'Failed to connect to assistant.');
+      }
+    } catch (err) {
+      console.error(err);
+      setError('Communication error when fetching suggestions.');
+    } finally {
+      setSuggesting(false);
+    }
+  };
 
   const renderBulletList = (val) => {
     if (!val) return null;
@@ -118,7 +154,7 @@ export default function MarketAnalysis({ getCsrfToken }) {
   };
 
   // Recharts preparation
-  const chartData = (result?.growth_chart_data || []).map(d => ({
+  const chartData = (Array.isArray(result?.growth_chart_data) ? result.growth_chart_data : []).map(d => ({
     name: d.period,
     Size: d.value
   }));
@@ -133,9 +169,27 @@ export default function MarketAnalysis({ getCsrfToken }) {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-start">
         {/* Config card */}
         <GlassCard className="lg:col-span-1 border border-white/5">
-          <div className="flex items-center space-x-2 border-b border-white/5 pb-3 mb-6">
-            <Sparkles className="w-5 h-5 text-indigo-400" />
-            <h2 className="text-sm font-semibold uppercase tracking-wider text-white">Market Parameters</h2>
+          <div className="flex items-center justify-between border-b border-white/5 pb-3 mb-6">
+            <div className="flex items-center space-x-2">
+              <Sparkles className="w-5 h-5 text-indigo-400" />
+              <h2 className="text-sm font-semibold uppercase tracking-wider text-white">Market Parameters</h2>
+            </div>
+            <button
+              type="button"
+              onClick={handleSuggestInputs}
+              disabled={suggesting}
+              className="text-[10px] font-bold bg-indigo-600/10 hover:bg-indigo-600/20 text-indigo-400 px-2.5 py-1 rounded-lg border border-indigo-500/10 flex items-center space-x-1 transition-all disabled:opacity-40"
+              title="Auto-fill form inputs based on your company context & uploaded knowledge base documents"
+            >
+              {suggesting ? (
+                <div className="w-3.5 h-3.5 border-2 border-indigo-400 border-t-transparent rounded-full animate-spin"></div>
+              ) : (
+                <>
+                  <Sparkles className="w-3 h-3" />
+                  <span>Suggest</span>
+                </>
+              )}
+            </button>
           </div>
 
           <form onSubmit={handleGenerate} className="space-y-4">
@@ -322,7 +376,7 @@ export default function MarketAnalysis({ getCsrfToken }) {
                           <span>Strengths</span>
                         </h4>
                         <ul className="space-y-1.5 text-xs text-gray-300">
-                          {(result.swot?.strengths || []).map((s, idx) => (
+                          {(Array.isArray(result.swot?.strengths) ? result.swot.strengths : []).map((s, idx) => (
                             <li key={idx} className="flex items-start space-x-2">
                               <span className="w-1 h-1 rounded-full bg-emerald-400 mt-1.5"></span>
                               <span>{s}</span>
@@ -338,7 +392,7 @@ export default function MarketAnalysis({ getCsrfToken }) {
                           <span>Weaknesses</span>
                         </h4>
                         <ul className="space-y-1.5 text-xs text-gray-300">
-                          {(result.swot?.weaknesses || []).map((w, idx) => (
+                          {(Array.isArray(result.swot?.weaknesses) ? result.swot.weaknesses : []).map((w, idx) => (
                             <li key={idx} className="flex items-start space-x-2">
                               <span className="w-1 h-1 rounded-full bg-rose-400 mt-1.5"></span>
                               <span>{w}</span>
@@ -354,7 +408,7 @@ export default function MarketAnalysis({ getCsrfToken }) {
                           <span>Opportunities</span>
                         </h4>
                         <ul className="space-y-1.5 text-xs text-gray-300">
-                          {(result.swot?.opportunities || []).map((o, idx) => (
+                          {(Array.isArray(result.swot?.opportunities) ? result.swot.opportunities : []).map((o, idx) => (
                             <li key={idx} className="flex items-start space-x-2">
                               <span className="w-1 h-1 rounded-full bg-indigo-400 mt-1.5"></span>
                               <span>{o}</span>
@@ -370,7 +424,7 @@ export default function MarketAnalysis({ getCsrfToken }) {
                           <span>Threats</span>
                         </h4>
                         <ul className="space-y-1.5 text-xs text-gray-300">
-                          {(result.swot?.threats || []).map((t, idx) => (
+                          {(Array.isArray(result.swot?.threats) ? result.swot.threats : []).map((t, idx) => (
                             <li key={idx} className="flex items-start space-x-2">
                               <span className="w-1 h-1 rounded-full bg-yellow-400 mt-1.5"></span>
                               <span>{t}</span>
@@ -407,7 +461,7 @@ export default function MarketAnalysis({ getCsrfToken }) {
                 {/* 3. COMPETITORS */}
                 {activeTab === 'competitors' && (
                   <div className="space-y-4">
-                    {(result.competitors || result.top_competitors || []).map((comp, idx) => (
+                    {(Array.isArray(result.competitors) ? result.competitors : Array.isArray(result.top_competitors) ? result.top_competitors : []).map((comp, idx) => (
                       <GlassCard key={idx} className="border border-white/5 flex flex-col md:flex-row justify-between gap-6">
                         <div className="space-y-2">
                           <h4 className="text-base font-bold text-white flex items-center space-x-2">

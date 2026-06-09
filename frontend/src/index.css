@@ -302,3 +302,18 @@ button.chat-suggestion-chip:hover {
   color: #1e1b4b !important;
   border-color: rgba(79, 70, 229, 0.3) !important;
 }
+
+/* Infinite Scrolling Marquee for Stock Ticker */
+@keyframes marquee {
+  0% {
+    transform: translateX(0);
+  }
+  100% {
+    transform: translateX(-50%);
+  }
+}
+.animate-marquee {
+  display: inline-flex;
+  animation: marquee 45s linear infinite;
+}
+

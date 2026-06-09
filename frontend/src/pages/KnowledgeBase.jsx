@@ -24,7 +24,7 @@ export default function KnowledgeBase({ getCsrfToken }) {
       const res = await fetch('/api/knowledge');
       if (res.ok) {
         const data = await res.json();
-        setDocs(data || []);
+        setDocs(Array.isArray(data) ? data : (data.documents || []));
       }
     } catch (err) {
       console.error("Knowledge base fetch error:", err);

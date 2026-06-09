@@ -333,7 +333,7 @@ export default function Workspace({ getCsrfToken }) {
               <GlassCard className="border border-white/5">
                 <h3 className="text-base font-bold text-white mb-4">Discovered Market Opportunities</h3>
                 <div className="space-y-3">
-                  {(opportunities || []).length === 0 ? (
+                  {!Array.isArray(opportunities) || opportunities.length === 0 ? (
                     <p className="text-xs text-gray-500 text-center py-4">No opportunities discovered. Run workspace summary update.</p>
                   ) : (
                     opportunities.map((opp) => (
@@ -356,7 +356,7 @@ export default function Workspace({ getCsrfToken }) {
               <GlassCard className="border border-white/5">
                 <h3 className="text-base font-bold text-white mb-4">Strategic Recommendations</h3>
                 <div className="space-y-3">
-                  {(recommendations || []).length === 0 ? (
+                  {!Array.isArray(recommendations) || recommendations.length === 0 ? (
                     <p className="text-xs text-gray-500 text-center py-4">No strategic recommendations logged yet.</p>
                   ) : (
                     recommendations.map((rec) => (

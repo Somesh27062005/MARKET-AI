@@ -20,20 +20,59 @@ import GlassCard from '../components/GlassCard.jsx';
 import ChatAssistant from '../components/ChatAssistant.jsx';
 
 export default function LeadScoring({ getCsrfToken }) {
-  const [name, setName] = useState('Sarah Jenkins');
-  const [company, setCompany] = useState('Apex Retail Group');
-  const [industry, setIndustry] = useState('Retail & E-commerce');
-  const [companySize, setCompanySize] = useState('50-200 employees');
-  const [decisionRole, setDecisionRole] = useState('VP of E-commerce');
-  const [budget, setBudget] = useState('$45,000 / Year');
-  const [need, setNeed] = useState('unify online inventory tracking across stores and automate shipping notifications');
-  const [urgency, setUrgency] = useState('Immediate launch before the holiday shopping season');
+  const [name, setName] = useState('');
+  const [company, setCompany] = useState('');
+  const [industry, setIndustry] = useState('');
+  const [companySize, setCompanySize] = useState('');
+  const [decisionRole, setDecisionRole] = useState('');
+  const [budget, setBudget] = useState('');
+  const [need, setNeed] = useState('');
+  const [urgency, setUrgency] = useState('');
   
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState(null);
   const [activeTab, setActiveTab] = useState('bant');
   const [error, setError] = useState('');
   const [crmStatus, setCrmStatus] = useState('');
+  const [suggesting, setSuggesting] = useState(false);
+
+  const handleSuggestInputs = async () => {
+    setSuggesting(true);
+    setError('');
+    try {
+      const res = await fetch('/api/v2/suggest_inputs', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-CSRF-Token': getCsrfToken()
+        },
+        body: JSON.stringify({ module: 'lead' })
+      });
+      const data = await res.json();
+      if (res.ok) {
+        if (data.success && data.suggestions) {
+          const s = data.suggestions;
+          setName(s.name || '');
+          setCompany(s.company || '');
+          setIndustry(s.industry || '');
+          setCompanySize(s.companySize || '');
+          setDecisionRole(s.decisionRole || '');
+          setBudget(s.budget || '');
+          setNeed(s.need || '');
+          setUrgency(s.urgency || '');
+        } else {
+          setError(data.error || 'Failed to retrieve suggestions.');
+        }
+      } else {
+        setError(data.error || 'Failed to connect to assistant.');
+      }
+    } catch (err) {
+      console.error(err);
+      setError('Communication error when fetching suggestions.');
+    } finally {
+      setSuggesting(false);
+    }
+  };
 
   const handleGenerate = async (e) => {
     e.preventDefault();
@@ -163,9 +202,27 @@ export default function LeadScoring({ getCsrfToken }) {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-start">
         {/* Input panel */}
         <GlassCard className="lg:col-span-1 border border-white/5">
-          <div className="flex items-center space-x-2 border-b border-white/5 pb-3 mb-6">
-            <Sparkles className="w-5 h-5 text-indigo-400" />
-            <h2 className="text-sm font-semibold uppercase tracking-wider text-white">Lead Details</h2>
+          <div className="flex items-center justify-between border-b border-white/5 pb-3 mb-6">
+            <div className="flex items-center space-x-2">
+              <Sparkles className="w-5 h-5 text-indigo-400" />
+              <h2 className="text-sm font-semibold uppercase tracking-wider text-white">Lead Details</h2>
+            </div>
+            <button
+              type="button"
+              onClick={handleSuggestInputs}
+              disabled={suggesting}
+              className="text-[10px] font-bold bg-indigo-600/10 hover:bg-indigo-600/20 text-indigo-400 px-2.5 py-1 rounded-lg border border-indigo-500/10 flex items-center space-x-1 transition-all disabled:opacity-40"
+              title="Auto-fill form inputs based on your company context & uploaded knowledge base documents"
+            >
+              {suggesting ? (
+                <div className="w-3.5 h-3.5 border-2 border-indigo-400 border-t-transparent rounded-full animate-spin"></div>
+              ) : (
+                <>
+                  <Sparkles className="w-3 h-3" />
+                  <span>Suggest</span>
+                </>
+              )}
+            </button>
           </div>
 
           <form onSubmit={handleGenerate} className="space-y-4">
@@ -469,10 +526,14 @@ export default function LeadScoring({ getCsrfToken }) {
                     <GlassCard className="border border-white/5">
                       <h3 className="text-base font-bold text-white mb-3">Recommended Actions</h3>
                       <div className="space-y-2">
-                        {(result.recommended_actions || []).map((act, i) => (
+                        {(Array.isArray(result.recommended_actions) ? result.recommended_actions : []).map((act, i) => (
                           <div key={i} className="bg-white/2 p-3 rounded-xl border border-white/5 text-xs text-gray-300 flex items-start space-x-2">
                             <CheckCircle className="w-4.5 h-4.5 text-indigo-400 shrink-0 mt-0.5" />
-                            <span>{act}</span>
+                            <span>
+                              {typeof act === 'object' && act !== null 
+                                ? `${act.action || ''}${act.timeline ? ` (Timeline: ${act.timeline})` : ''}`
+                                : act}
+                            </span>
                           </div>
                         ))}
                       </div>

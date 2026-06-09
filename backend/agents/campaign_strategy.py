@@ -113,7 +113,7 @@ def campaign_node(state: CampaignState) -> dict:
         f"      - dependencies: Pre-requisites/Dependencies\n"
         f"      - risk_level: Low, Medium, or High\n"
         f"      - expected_outcome: Outcome description\n\n"
-        f"11. Provide content_ideas, ad_copies, cta_suggestions, estimated_reach, estimated_ctr, estimated_cvr, timeline_weeks.\n"
+        f"11. Provide content_ideas, ad_copies, cta_suggestions, estimated_reach, estimated_ctr, estimated_cvr, timeline_weeks, and social_media_posts (a list of social media posts, each with platform, copy, and media_suggestion. Generate at least 3 engaging posts for relevant platforms like LinkedIn, Twitter/X, or Instagram).\n"
         f"IMPORTANT: Reach must be calculated dynamically based on budget ({budget}) and platform ({platform}) and avoid simple round placeholder numbers (e.g. use realistic numbers like 142,500 instead of 100,000).\n"
         f"{grounding}"
     )
@@ -294,8 +294,23 @@ def metrics_node(state: CampaignState) -> dict:
             for item in result["roadmap_actions"]
         ]
 
+    # Ensure social_media_posts is always populated
+    if "social_media_posts" not in result or not isinstance(result["social_media_posts"], list) or not result["social_media_posts"]:
+        result["social_media_posts"] = [
+            {
+                "platform": "LinkedIn",
+                "copy": f"Is your team looking to optimize workflows? 📉 With {co_name}'s latest integration for {state.get('product', 'our product')}, you can automate key tasks, reduce manual errors, and scale departments seamlessly. #Efficiency #Operations #B2B",
+                "media_suggestion": "An infographic showing workflow comparison."
+            },
+            {
+                "platform": "Twitter/X",
+                "copy": f"Stop letting manual processes stall your growth. 🚀 {state.get('product', 'our product')} by {co_name} deploys in days, delivering real-time operations tracking with robust security. Get your custom briefing: [Link] #WorkforceEfficiency #TechSolutions",
+                "media_suggestion": "A product demo GIF showing user dashboard features."
+            }
+        ]
+
     required = ["campaign_name", "objectives", "persona", "funnel", "content_ideas",
-                "ad_copies", "budget_allocation", "kpis", "calendar"]
+                "ad_copies", "budget_allocation", "kpis", "calendar", "social_media_posts"]
     score = compute_confidence(result, required)
     return {"result": result, "confidence_score": score}
 

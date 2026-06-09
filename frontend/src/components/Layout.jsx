@@ -98,14 +98,14 @@ export default function Layout({ children, user, onLogout }) {
           <div className="w-12 h-12 rounded-2xl bg-indigo-600 flex items-center justify-center shadow-lg shadow-indigo-600/30 shrink-0">
             <Flame className="w-6 h-6 text-white animate-pulse" />
           </div>
-          <div className="opacity-0 w-0 scale-95 group-hover:opacity-100 group-hover:w-auto group-hover:scale-100 transition-all duration-300 ml-3 overflow-hidden whitespace-nowrap">
+          <div className="opacity-0 w-0 scale-95 group-hover:opacity-100 group-hover:w-auto group-hover:scale-100 transition-all duration-300 group-hover:ml-3 ml-0 overflow-hidden whitespace-nowrap">
             <h1 className="text-lg font-display font-bold text-white tracking-wide leading-none">MarketMind</h1>
             <span className="text-xs text-indigo-400 font-medium tracking-widest uppercase">Intelligence</span>
           </div>
         </div>
 
         {/* Navigation */}
-        <nav className="flex-1 px-3 py-6 space-y-1 overflow-y-auto custom-scrollbar">
+        <nav className="flex-1 px-3 py-6 space-y-1.5 overflow-y-auto custom-scrollbar flex flex-col items-center group-hover:items-stretch">
           {navItems.map((item) => {
             const Icon = item.icon;
             const isActive = location.pathname === item.path;
@@ -114,7 +114,7 @@ export default function Layout({ children, user, onLogout }) {
                 key={item.path}
                 to={item.path}
                 className={({ isActive }) => `
-                  flex items-center justify-center group-hover:justify-start px-0 group-hover:px-4 py-3 rounded-2xl transition-all duration-300 font-medium text-sm group/link w-full
+                  flex items-center justify-center w-12 h-12 group-hover:w-full group-hover:justify-start group-hover:px-4 rounded-2xl transition-all duration-300 font-medium text-sm group/link
                   ${isActive 
                     ? 'bg-indigo-600/20 text-indigo-400 shadow-inner' 
                     : 'text-gray-400 hover:text-indigo-400 hover:bg-white/5'}
@@ -131,7 +131,7 @@ export default function Layout({ children, user, onLogout }) {
 
         {/* Sidebar Footer User Info */}
         <div className="py-4 px-0 group-hover:px-6 border-t border-white/5 bg-surface-900/40 flex items-center justify-center group-hover:justify-between rounded-b-[2rem] transition-all duration-300 shrink-0">
-          <div className="flex items-center">
+          <div className="flex items-center justify-center group-hover:justify-start w-12 group-hover:w-auto">
             <div className="w-10 h-10 rounded-full bg-indigo-600/30 border border-indigo-500/20 flex items-center justify-center font-display font-semibold text-indigo-400 shrink-0">
               {user.avatar || user.name?.[0]?.toUpperCase() || 'U'}
             </div>
@@ -143,7 +143,7 @@ export default function Layout({ children, user, onLogout }) {
           <button 
             onClick={handleLogoutClick}
             title="Log Out"
-            className="opacity-0 w-0 scale-95 group-hover:opacity-100 group-hover:w-auto group-hover:scale-100 transition-all duration-300 p-2 text-gray-500 hover:text-red-400 hover:bg-white/5 rounded-xl shrink-0"
+            className="opacity-0 w-0 scale-95 group-hover:opacity-100 group-hover:w-auto group-hover:scale-100 transition-all duration-300 p-0 group-hover:p-2 text-gray-500 hover:text-red-400 hover:bg-white/5 rounded-xl shrink-0"
           >
             <LogOut className="w-4 h-4" />
           </button>
@@ -162,20 +162,27 @@ export default function Layout({ children, user, onLogout }) {
             </div>
 
             {/* Live Ticker */}
-            <div className="flex items-center space-x-6 overflow-x-auto no-scrollbar py-1 text-xs shrink-0 select-none custom-scrollbar">
-              {stockPrices.map((stock) => {
-                const isPositive = stock.change_pct >= 0;
-                return (
-                  <div key={stock.ticker} className="flex items-center space-x-2 bg-white/5 px-2.5 py-1 rounded-md border border-white/5">
-                    <span className="font-bold text-gray-300">{stock.ticker}</span>
-                    <span className="text-white font-medium">{stock.price.toFixed(2)}</span>
-                    <span className={`flex items-center font-semibold ${isPositive ? 'text-emerald-400' : 'text-rose-400'}`}>
-                      {isPositive ? <ArrowUpRight className="w-3.5 h-3.5 mr-0.5" /> : <ArrowDownRight className="w-3.5 h-3.5 mr-0.5" />}
-                      {Math.abs(stock.change_pct).toFixed(2)}%
-                    </span>
-                  </div>
-                );
-              })}
+            <div className="flex-1 overflow-hidden relative select-none max-w-lg">
+              {/* Fade masks on edges for premium aesthetics */}
+              <div className="absolute left-0 top-0 bottom-0 w-6 bg-gradient-to-r from-slate-100/80 to-transparent z-10 pointer-events-none"></div>
+              <div className="absolute right-0 top-0 bottom-0 w-6 bg-gradient-to-l from-slate-100/80 to-transparent z-10 pointer-events-none"></div>
+              
+              <div className="flex items-center space-x-6 py-1 text-xs whitespace-nowrap w-max animate-marquee hover:[animation-play-state:paused]">
+                {/* We map twice to ensure seamless infinite looping */}
+                {[...stockPrices, ...stockPrices].map((stock, idx) => {
+                  const isPositive = stock.change_pct >= 0;
+                  return (
+                    <div key={`${stock.ticker}-${idx}`} className="inline-flex items-center space-x-2 bg-white/5 px-2.5 py-1 rounded-md border border-white/5 transition-all hover:bg-white/10 hover:scale-105 duration-200">
+                      <span className="font-bold text-gray-300">{stock.ticker}</span>
+                      <span className="text-white font-medium">{stock.price.toFixed(2)}</span>
+                      <span className={`flex items-center font-semibold ${isPositive ? 'text-emerald-400' : 'text-rose-400'}`}>
+                        {isPositive ? <ArrowUpRight className="w-3.5 h-3.5 mr-0.5" /> : <ArrowDownRight className="w-3.5 h-3.5 mr-0.5" />}
+                        {Math.abs(stock.change_pct).toFixed(2)}%
+                      </span>
+                    </div>
+                  );
+                })}
+              </div>
             </div>
           </div>
 

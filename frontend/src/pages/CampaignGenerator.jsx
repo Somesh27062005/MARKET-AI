@@ -18,15 +18,159 @@ import GlassCard from '../components/GlassCard.jsx';
 import ChatAssistant from '../components/ChatAssistant.jsx';
 
 export default function CampaignGenerator({ getCsrfToken }) {
-  const [product, setProduct] = useState('Eco-Friendly Smart Packaging');
-  const [audience, setAudience] = useState('E-commerce brands and cosmetics retailers looking to improve sustainability');
-  const [platform, setPlatform] = useState('Instagram & Google Search');
-  const [goals, setGoals] = useState('Customer acquisition and sustainability branding');
-  const [budget, setBudget] = useState('$8,000 - $20,000');
+  const [product, setProduct] = useState('');
+  const [audience, setAudience] = useState('');
+  const [platform, setPlatform] = useState('');
+  const [goals, setGoals] = useState('');
+  const [budget, setBudget] = useState('');
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState(null);
   const [activeTab, setActiveTab] = useState('overview');
   const [error, setError] = useState('');
+  const [suggesting, setSuggesting] = useState(false);
+  const [postingStates, setPostingStates] = useState({});
+  const [toast, setToast] = useState(null);
+
+  const showToast = (message, type = 'success') => {
+    setToast({ message, type });
+    setTimeout(() => {
+      setToast(null);
+    }, 4000);
+  };
+
+  const copyToClipboard = async (text) => {
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      try {
+        await navigator.clipboard.writeText(text);
+        return true;
+      } catch (err) {
+        console.error("Failed to copy using navigator.clipboard", err);
+      }
+    }
+    // Fallback using temporary textarea
+    try {
+      const textArea = document.createElement("textarea");
+      textArea.value = text;
+      textArea.style.position = "fixed";
+      document.body.appendChild(textArea);
+      textArea.focus();
+      textArea.select();
+      const successful = document.execCommand('copy');
+      document.body.removeChild(textArea);
+      return successful;
+    } catch (err) {
+      console.error("Fallback copy failed", err);
+      return false;
+    }
+  };
+
+  const executePostPublish = async (idx, platform, copy) => {
+    setPostingStates(prev => ({ ...prev, [idx]: 'posting' }));
+    const minDelay = new Promise(resolve => setTimeout(resolve, 1000));
+    try {
+      const apiCall = fetch('/api/v2/campaign/post', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-CSRF-Token': getCsrfToken()
+        },
+        body: JSON.stringify({
+          platform: platform,
+          copy: copy
+        })
+      });
+      const [res] = await Promise.all([apiCall, minDelay]);
+      const data = await res.json();
+      if (res.ok && data.success) {
+        setPostingStates(prev => ({ ...prev, [idx]: 'success' }));
+        
+        // Reset the button back to clickable state after 3.5 seconds
+        setTimeout(() => {
+          setPostingStates(prev => ({ ...prev, [idx]: 'idle' }));
+        }, 3500);
+
+        // Fail-safe copy to clipboard for all posts using robust fallback
+        await copyToClipboard(copy);
+        
+        const cleanPlatform = platform.toLowerCase();
+        if (cleanPlatform.includes('twitter') || cleanPlatform === 'x') {
+          // Twitter/X supports url pre-fill cleanly
+          const tweetUrl = `https://twitter.com/intent/tweet?text=${encodeURIComponent(copy)}`;
+          window.open(tweetUrl, '_blank');
+          showToast("Twitter compose opened! Post copy synced to clipboard as backup.");
+        } else if (cleanPlatform.includes('linkedin')) {
+          // Use clipboard copy + new tab redirect to LinkedIn feed composer to bypass URL parsing truncation bugs
+          showToast("Full post copied! Opening LinkedIn feed composer (press Ctrl+V to paste)...", "success");
+          setTimeout(() => {
+            window.open('https://www.linkedin.com/feed/?shareActive=true', '_blank');
+          }, 1000);
+        } else if (cleanPlatform.includes('instagram')) {
+          showToast("Caption copied! Opening Instagram to share (press Ctrl+V to paste)...", "success");
+          setTimeout(() => {
+            window.open('https://www.instagram.com/', '_blank');
+          }, 1000);
+        } else {
+          showToast("Post content copied to clipboard!");
+        }
+      } else {
+        setPostingStates(prev => ({ ...prev, [idx]: 'error' }));
+        setTimeout(() => {
+          setPostingStates(prev => ({ ...prev, [idx]: 'idle' }));
+        }, 3000);
+        alert(data.error || `Failed to post to ${platform}`);
+      }
+    } catch (err) {
+      console.error(err);
+      setPostingStates(prev => ({ ...prev, [idx]: 'error' }));
+      setTimeout(() => {
+        setPostingStates(prev => ({ ...prev, [idx]: 'idle' }));
+      }, 3000);
+      alert('Network error during posting simulation.');
+    }
+  };
+
+  const handlePublishPost = async (idx, post) => {
+    let normPlatform = post.platform || "LinkedIn";
+    if (normPlatform.toLowerCase().includes("linkedin")) normPlatform = "LinkedIn";
+    else if (normPlatform.toLowerCase().includes("twitter") || normPlatform.toLowerCase().includes("x")) normPlatform = "Twitter/X";
+    else if (normPlatform.toLowerCase().includes("instagram")) normPlatform = "Instagram";
+    await executePostPublish(idx, normPlatform, post.copy);
+  };
+
+  const handleSuggestInputs = async () => {
+    setSuggesting(true);
+    setError('');
+    try {
+      const res = await fetch('/api/v2/suggest_inputs', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-CSRF-Token': getCsrfToken()
+        },
+        body: JSON.stringify({ module: 'campaign' })
+      });
+      const data = await res.json();
+      if (res.ok) {
+        if (data.success && data.suggestions) {
+          const s = data.suggestions;
+          setProduct(s.product || '');
+          setAudience(s.audience || '');
+          setPlatform(s.platform || '');
+          setGoals(s.goals || '');
+          setBudget(s.budget || '');
+        } else {
+          setError(data.error || 'Failed to retrieve suggestions.');
+        }
+      } else {
+        setError(data.error || 'Failed to connect to assistant.');
+      }
+    } catch (err) {
+      console.error(err);
+      setError('Communication error when fetching suggestions.');
+    } finally {
+      setSuggesting(false);
+    }
+  };
 
   const handleGenerate = async (e) => {
     e.preventDefault();
@@ -106,9 +250,27 @@ export default function CampaignGenerator({ getCsrfToken }) {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-start">
         {/* Configuration panel */}
         <GlassCard className="lg:col-span-1 border border-white/5">
-          <div className="flex items-center space-x-2 border-b border-white/5 pb-3 mb-6">
-            <Sparkles className="w-5 h-5 text-indigo-400" />
-            <h2 className="text-sm font-semibold uppercase tracking-wider text-white">Campaign configuration</h2>
+          <div className="flex items-center justify-between border-b border-white/5 pb-3 mb-6">
+            <div className="flex items-center space-x-2">
+              <Sparkles className="w-5 h-5 text-indigo-400" />
+              <h2 className="text-sm font-semibold uppercase tracking-wider text-white">Campaign configuration</h2>
+            </div>
+            <button
+              type="button"
+              onClick={handleSuggestInputs}
+              disabled={suggesting}
+              className="text-[10px] font-bold bg-indigo-600/10 hover:bg-indigo-600/20 text-indigo-400 px-2.5 py-1 rounded-lg border border-indigo-500/10 flex items-center space-x-1 transition-all disabled:opacity-40"
+              title="Auto-fill form inputs based on your company context & uploaded knowledge base documents"
+            >
+              {suggesting ? (
+                <div className="w-3.5 h-3.5 border-2 border-indigo-400 border-t-transparent rounded-full animate-spin"></div>
+              ) : (
+                <>
+                  <Sparkles className="w-3 h-3" />
+                  <span>Suggest</span>
+                </>
+              )}
+            </button>
           </div>
 
           <form onSubmit={handleGenerate} className="space-y-4">
@@ -256,12 +418,13 @@ export default function CampaignGenerator({ getCsrfToken }) {
               </GlassCard>
 
               {/* Navigation Tabs */}
-              <div className="flex border-b border-white/5 text-sm">
+              <div className="flex border-b border-white/5 text-sm flex-wrap">
                 {[
                   { id: 'overview', label: 'Overview', icon: FileText },
                   { id: 'audience', label: 'Persona Profile', icon: Eye },
                   { id: 'funnel', label: 'Funnel tactics', icon: Layers },
                   { id: 'content', label: 'Ads & Copy', icon: Send },
+                  { id: 'social_posts', label: 'Social Posts', icon: Share2 },
                   { id: 'calendar', label: 'Schedule', icon: Calendar }
                 ].map((tab) => {
                   const Icon = tab.icon;
@@ -293,21 +456,21 @@ export default function CampaignGenerator({ getCsrfToken }) {
                     <div>
                       <h3 className="text-base font-bold text-white mb-3">Core Strategic Objectives</h3>
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        {(result.strategic_goals || []).length > 0 ? (
+                        {Array.isArray(result.strategic_goals) && result.strategic_goals.length > 0 ? (
                           result.strategic_goals.map((goal, idx) => (
                             <div key={idx} className="bg-white/2 p-4 rounded-xl border border-white/5 space-y-2">
                               <h4 className="text-sm font-bold text-white flex items-center space-x-2">
                                 <span className="w-5 h-5 rounded-full bg-indigo-600/20 text-indigo-400 flex items-center justify-center text-xs font-bold">{idx+1}</span>
-                                <span>{goal.goal_name || goal}</span>
+                                <span>{typeof goal === 'object' && goal !== null ? (goal.goal_name || '') : goal}</span>
                               </h4>
                               {goal.business_context && <p className="text-xs text-gray-400">{goal.business_context}</p>}
                             </div>
                           ))
                         ) : (
-                          (result.objectives || []).map((obj, idx) => (
+                          (Array.isArray(result.objectives) ? result.objectives : []).map((obj, idx) => (
                             <div key={idx} className="bg-white/2 p-4 rounded-xl border border-white/5 flex items-center space-x-3 text-sm text-gray-300">
                               <CheckCircle className="w-5 h-5 text-indigo-400 shrink-0" />
-                              <span>{obj}</span>
+                              <span>{typeof obj === 'object' && obj !== null ? (obj.objective || obj.title || JSON.stringify(obj)) : obj}</span>
                             </div>
                           ))
                         )}
@@ -333,7 +496,7 @@ export default function CampaignGenerator({ getCsrfToken }) {
                           {(result.persona_profile?.pain_points || result.persona?.pain_points || []).map((pt, i) => (
                             <li key={i} className="flex items-start space-x-2">
                               <span className="w-1.5 h-1.5 rounded-full bg-indigo-400 mt-1.5"></span>
-                              <span>{pt}</span>
+                              <span>{typeof pt === 'object' && pt !== null ? JSON.stringify(pt) : pt}</span>
                             </li>
                           ))}
                         </ul>
@@ -345,7 +508,7 @@ export default function CampaignGenerator({ getCsrfToken }) {
                           {(result.persona_profile?.buying_motivations || result.persona?.goals || []).map((gl, i) => (
                             <li key={i} className="flex items-start space-x-2">
                               <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 mt-1.5"></span>
-                              <span>{gl}</span>
+                              <span>{typeof gl === 'object' && gl !== null ? JSON.stringify(gl) : gl}</span>
                             </li>
                           ))}
                         </ul>
@@ -380,7 +543,9 @@ export default function CampaignGenerator({ getCsrfToken }) {
                               <h5 className="font-bold text-gray-400 uppercase tracking-wider mb-2">Tactics / Channels</h5>
                               <div className="flex flex-wrap gap-1.5">
                                 {(stageData.tactics || []).map((tac, i) => (
-                                  <span key={i} className="bg-white/5 px-2 py-1 rounded text-white font-medium">{tac}</span>
+                                  <span key={i} className="bg-white/5 px-2 py-1 rounded text-white font-medium">
+                                    {typeof tac === 'object' && tac !== null ? JSON.stringify(tac) : tac}
+                                  </span>
                                 ))}
                               </div>
                             </div>
@@ -390,7 +555,7 @@ export default function CampaignGenerator({ getCsrfToken }) {
                                 {(stageData.kpis || []).map((kp, i) => (
                                   <li key={i} className="flex items-center space-x-1.5">
                                     <span className="w-1 h-1 rounded-full bg-white/20"></span>
-                                    <span>{kp}</span>
+                                    <span>{typeof kp === 'object' && kp !== null ? JSON.stringify(kp) : kp}</span>
                                   </li>
                                 ))}
                               </ul>
@@ -447,6 +612,105 @@ export default function CampaignGenerator({ getCsrfToken }) {
                   </div>
                 )}
 
+                {/* 5. SOCIAL MEDIA POSTS */}
+                {activeTab === 'social_posts' && (
+                  <div className="space-y-6">
+                    <GlassCard className="border border-white/5">
+                      <div className="flex items-center justify-between border-b border-white/5 pb-3 mb-4 flex-wrap gap-2">
+                        <div>
+                          <h3 className="text-base font-bold text-white">Generated Social Media Posts</h3>
+                          <p className="text-xs text-gray-400 mt-0.5">Custom posts generated by the AI matching your campaign goals.</p>
+                        </div>
+                        <span className="text-xs font-semibold px-2.5 py-1 rounded-lg bg-indigo-600/20 text-indigo-400 border border-indigo-500/10">
+                          {Array.isArray(result.social_media_posts) ? result.social_media_posts.length : 0} Posts Ready
+                        </span>
+                      </div>
+
+                      <div className="grid grid-cols-1 gap-6">
+                        {Array.isArray(result.social_media_posts) && result.social_media_posts.length > 0 ? (
+                          result.social_media_posts.map((post, idx) => {
+                            const postStatus = postingStates[idx] || 'idle';
+                            const isLinkedIn = post.platform?.toLowerCase().includes('linkedin');
+                            const isTwitter = post.platform?.toLowerCase().includes('twitter') || post.platform?.toLowerCase().includes('x');
+                            const isInstagram = post.platform?.toLowerCase().includes('instagram');
+
+                            let platformBadge = "bg-white/5 text-gray-300";
+                            if (isLinkedIn) platformBadge = "bg-blue-600/20 text-blue-400 border border-blue-500/20";
+                            else if (isTwitter) platformBadge = "bg-slate-950/40 text-slate-200 border border-slate-700/30";
+                            else if (isInstagram) platformBadge = "bg-pink-600/20 text-pink-400 border border-pink-500/20";
+
+                            return (
+                              <div key={idx} className="bg-white/2 p-5 rounded-2xl border border-white/5 flex flex-col justify-between space-y-4 hover:border-white/10 transition-all">
+                                <div className="space-y-3">
+                                  <div className="flex items-center justify-between">
+                                    <div className="flex items-center space-x-2">
+                                      <span className={`text-[10px] font-bold uppercase tracking-wider px-2.5 py-1 rounded-lg ${platformBadge}`}>
+                                        {post.platform || 'Social Media'}
+                                      </span>
+                                    </div>
+                                    <div className="flex items-center text-xs text-gray-400 font-semibold">
+                                      <span>Generated Campaign Asset</span>
+                                    </div>
+                                  </div>
+
+                                  <div className="text-sm text-gray-200 leading-relaxed whitespace-pre-wrap bg-white/2 p-4 rounded-xl border border-white/5 font-normal">
+                                    {post.copy}
+                                  </div>
+
+                                  {post.media_suggestion && (
+                                    <div className="bg-indigo-600/5 border border-indigo-500/10 rounded-xl p-3.5 flex items-start space-x-2.5">
+                                      <Sparkles className="w-4 h-4 text-indigo-400 shrink-0 mt-0.5" />
+                                      <div>
+                                        <h5 className="text-xs font-bold text-indigo-300 uppercase tracking-wider">Media Suggestion</h5>
+                                        <p className="text-xs text-gray-300 mt-0.5 leading-relaxed">{post.media_suggestion}</p>
+                                      </div>
+                                    </div>
+                                  )}
+                                </div>
+
+                                <div className="pt-4 border-t border-white/5 flex justify-end">
+                                  <button
+                                    onClick={() => handlePublishPost(idx, post)}
+                                    disabled={postStatus === 'posting'}
+                                    className={`px-5 py-2 rounded-xl text-xs font-bold transition-all flex items-center space-x-2 border shadow-lg ${
+                                      postStatus === 'success'
+                                        ? 'bg-emerald-600/20 text-emerald-400 border-emerald-500/20 shadow-emerald-500/5 hover:bg-emerald-600/30'
+                                        : postStatus === 'posting'
+                                        ? 'bg-indigo-600/20 text-indigo-400 border-indigo-500/10 shadow-indigo-500/5'
+                                        : 'bg-indigo-600 hover:bg-indigo-500 text-white border-indigo-500/35 hover:shadow-indigo-500/10'
+                                    }`}
+                                  >
+                                    {postStatus === 'posting' ? (
+                                      <>
+                                        <div className="w-3.5 h-3.5 border-2 border-indigo-400 border-t-transparent rounded-full animate-spin shrink-0"></div>
+                                        <span>Opening...</span>
+                                      </>
+                                    ) : postStatus === 'success' ? (
+                                      <>
+                                        <CheckCircle className="w-4 h-4 shrink-0 text-emerald-400" />
+                                        <span>Copied & Opened!</span>
+                                      </>
+                                    ) : (
+                                      <>
+                                        <Share2 className="w-3.5 h-3.5 shrink-0" />
+                                        <span>Publish Post</span>
+                                      </>
+                                    )}
+                                  </button>
+                                </div>
+                              </div>
+                            );
+                          })
+                        ) : (
+                          <div className="text-center py-8 text-xs text-gray-500">
+                            No social media posts generated for this campaign.
+                          </div>
+                        )}
+                      </div>
+                    </GlassCard>
+                  </div>
+                )}
+
                 {/* 5. CALENDAR SCHEDULE */}
                 {activeTab === 'calendar' && (
                   <GlassCard>
@@ -478,6 +742,19 @@ export default function CampaignGenerator({ getCsrfToken }) {
         </div>
       </div>
       <ChatAssistant domain="campaign" contextData={result} getCsrfToken={getCsrfToken} />
+
+      {/* Toast Notification Overlay */}
+      {toast && (
+        <div className="fixed bottom-6 right-6 z-50 animate-fade-in bg-slate-950/90 border border-emerald-500/35 text-white px-5 py-3.5 rounded-2xl shadow-2xl backdrop-blur-md flex items-center space-x-3.5 min-w-[320px] transition-all">
+          <div className="w-9 h-9 rounded-xl bg-emerald-600/20 border border-emerald-500/20 flex items-center justify-center text-emerald-400 shrink-0">
+            <CheckCircle className="w-5 h-5 animate-pulse" />
+          </div>
+          <div>
+            <p className="text-xs font-bold uppercase tracking-widest text-emerald-400">Social Publish</p>
+            <p className="text-xs font-medium text-gray-300 mt-0.5">{toast.message}</p>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

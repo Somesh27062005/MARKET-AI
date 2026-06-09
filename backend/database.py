@@ -448,6 +448,17 @@ def init_db():
     """)
     cursor.execute("CREATE INDEX IF NOT EXISTS idx_sims_ws ON growth_simulations(workspace_id)")
 
+    cursor.execute("""
+    CREATE TABLE IF NOT EXISTS social_integrations (
+        user_email TEXT NOT NULL,
+        platform TEXT NOT NULL,
+        connected INTEGER DEFAULT 0,
+        username TEXT DEFAULT '',
+        PRIMARY KEY (user_email, platform),
+        FOREIGN KEY (user_email) REFERENCES users (email) ON DELETE CASCADE
+    )
+    """)
+
     conn.commit()
     conn.close()
     print("✅ SQLite database initialized successfully with demo data, stock tickers, and new enterprise analyzer tables.")
@@ -1308,5 +1319,37 @@ def save_growth_simulation(workspace_id, simulation_name, input_parameters, simu
         """, (sim_id, workspace_id, simulation_name, params_str, out_str, now))
         _commit(conn)
         return sim_id
+    finally:
+        conn.close()
+
+
+def get_social_integrations(email):
+    conn = get_db()
+    try:
+        cur = _exec(conn, f"SELECT platform, connected, username FROM social_integrations WHERE user_email = {PH}", (email,))
+        rows = cur.fetchall()
+        return [dict(r) for r in rows]
+    finally:
+        conn.close()
+
+
+def save_social_integration(email, platform, connected, username):
+    conn = get_db()
+    try:
+        cur = _exec(conn, f"SELECT 1 FROM social_integrations WHERE user_email = {PH} AND platform = {PH}", (email, platform))
+        exists = cur.fetchone()
+        if exists:
+            _exec(conn, f"""
+                UPDATE social_integrations 
+                SET connected = {PH}, username = {PH} 
+                WHERE user_email = {PH} AND platform = {PH}
+            """, (1 if connected else 0, username, email, platform))
+        else:
+            _exec(conn, f"""
+                INSERT INTO social_integrations (user_email, platform, connected, username)
+                VALUES ({PH}, {PH}, {PH}, {PH})
+            """, (email, platform, 1 if connected else 0, username))
+        _commit(conn)
+        return True
     finally:
         conn.close()

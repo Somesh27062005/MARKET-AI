@@ -17,16 +17,52 @@ import GlassCard from '../components/GlassCard.jsx';
 import ChatAssistant from '../components/ChatAssistant.jsx';
 
 export default function BusinessInsights({ getCsrfToken }) {
-  const [businessType, setBusinessType] = useState('Direct-to-Consumer E-commerce');
-  const [challenges, setChallenges] = useState('High customer acquisition costs (CAC), high shopping cart abandonment rate, frequent inventory stockouts on top-selling SKUs');
-  const [goals, setGoals] = useState('Reduce customer acquisition cost by 20%, improve shopping cart conversion rate by 15%, stabilize supply chain fill rate to 98%');
-  const [targetAudience, setTargetAudience] = useState('Tech-savvy urban millennials and eco-conscious shoppers');
-  const [industryContext, setIndustryContext] = useState('Rapidly evolving consumer retail landscape with high brand switching behavior');
+  const [businessType, setBusinessType] = useState('');
+  const [challenges, setChallenges] = useState('');
+  const [goals, setGoals] = useState('');
+  const [targetAudience, setTargetAudience] = useState('');
+  const [industryContext, setIndustryContext] = useState('');
   
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState(null);
   const [activeTab, setActiveTab] = useState('diagnostic');
   const [error, setError] = useState('');
+  const [suggesting, setSuggesting] = useState(false);
+
+  const handleSuggestInputs = async () => {
+    setSuggesting(true);
+    setError('');
+    try {
+      const res = await fetch('/api/v2/suggest_inputs', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-CSRF-Token': getCsrfToken()
+        },
+        body: JSON.stringify({ module: 'insights' })
+      });
+      const data = await res.json();
+      if (res.ok) {
+        if (data.success && data.suggestions) {
+          const s = data.suggestions;
+          setBusinessType(s.businessType || '');
+          setChallenges(s.challenges || '');
+          setGoals(s.goals || '');
+          setTargetAudience(s.targetAudience || '');
+          setIndustryContext(s.industryContext || '');
+        } else {
+          setError(data.error || 'Failed to retrieve suggestions.');
+        }
+      } else {
+        setError(data.error || 'Failed to connect to assistant.');
+      }
+    } catch (err) {
+      console.error(err);
+      setError('Communication error when fetching suggestions.');
+    } finally {
+      setSuggesting(false);
+    }
+  };
 
   const handleGenerate = async (e) => {
     e.preventDefault();
@@ -112,9 +148,27 @@ export default function BusinessInsights({ getCsrfToken }) {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-start">
         {/* Config card */}
         <GlassCard className="lg:col-span-1 border border-white/5">
-          <div className="flex items-center space-x-2 border-b border-white/5 pb-3 mb-6">
-            <Sparkles className="w-5 h-5 text-indigo-400" />
-            <h2 className="text-sm font-semibold uppercase tracking-wider text-white">Advisory inputs</h2>
+          <div className="flex items-center justify-between border-b border-white/5 pb-3 mb-6">
+            <div className="flex items-center space-x-2">
+              <Sparkles className="w-5 h-5 text-indigo-400" />
+              <h2 className="text-sm font-semibold uppercase tracking-wider text-white">Advisory inputs</h2>
+            </div>
+            <button
+              type="button"
+              onClick={handleSuggestInputs}
+              disabled={suggesting}
+              className="text-[10px] font-bold bg-indigo-600/10 hover:bg-indigo-600/20 text-indigo-400 px-2.5 py-1 rounded-lg border border-indigo-500/10 flex items-center space-x-1 transition-all disabled:opacity-40"
+              title="Auto-fill form inputs based on your company context & uploaded knowledge base documents"
+            >
+              {suggesting ? (
+                <div className="w-3.5 h-3.5 border-2 border-indigo-400 border-t-transparent rounded-full animate-spin"></div>
+              ) : (
+                <>
+                  <Sparkles className="w-3 h-3" />
+                  <span>Suggest</span>
+                </>
+              )}
+            </button>
           </div>
 
           <form onSubmit={handleGenerate} className="space-y-4">
@@ -290,7 +344,7 @@ export default function BusinessInsights({ getCsrfToken }) {
                     <GlassCard className="border border-white/5">
                       <h3 className="text-sm font-bold text-white mb-3">Operational Challenges</h3>
                       <div className="space-y-3">
-                        {(result.current_challenges || []).map((ch, idx) => (
+                        {(Array.isArray(result.current_challenges) ? result.current_challenges : []).map((ch, idx) => (
                           <div key={idx} className="bg-white/2 p-3 rounded-xl border border-white/5 text-xs flex justify-between items-center">
                             <div>
                               <h4 className="font-bold text-white">{ch.challenge || ch}</h4>
@@ -310,7 +364,7 @@ export default function BusinessInsights({ getCsrfToken }) {
                     <GlassCard className="border border-white/5">
                       <h3 className="text-sm font-bold text-white mb-3">Root Cause Diagnosis</h3>
                       <div className="space-y-3">
-                        {(result.root_cause_analysis || []).map((rc, idx) => (
+                        {(Array.isArray(result.root_cause_analysis) ? result.root_cause_analysis : []).map((rc, idx) => (
                           <div key={idx} className="bg-white/2 p-3.5 rounded-xl border border-white/5 text-xs">
                             <h4 className="font-bold text-white flex items-center space-x-2">
                               <AlertTriangle className="w-4 h-4 text-rose-400" />
@@ -333,11 +387,11 @@ export default function BusinessInsights({ getCsrfToken }) {
                       <GlassCard className="border border-white/5">
                         <h3 className="text-sm font-bold text-white mb-3">New Revenue Channels</h3>
                         <div className="space-y-2">
-                          {(result.revenue_opportunities || []).map((opp, idx) => (
+                          {(Array.isArray(result.revenue_opportunities) ? result.revenue_opportunities : []).map((opp, idx) => (
                             <div key={idx} className="bg-white/2 p-3 rounded-xl border border-white/5 text-xs">
                               <div className="flex justify-between font-bold text-white">
                                 <span>{opp.source}</span>
-                                <span className="text-emerald-400">{opp.potential}</span>
+                                <span>{opp.potential}</span>
                               </div>
                               <span className="text-[10px] text-gray-500 block mt-1">Timeline: {opp.timeline || 'Q3'}</span>
                             </div>
@@ -348,7 +402,7 @@ export default function BusinessInsights({ getCsrfToken }) {
                       <GlassCard className="border border-white/5">
                         <h3 className="text-sm font-bold text-white mb-3">Cost Optimization Areas</h3>
                         <div className="space-y-2">
-                          {(result.cost_optimization || []).map((cost, idx) => (
+                          {(Array.isArray(result.cost_optimization) ? result.cost_optimization : []).map((cost, idx) => (
                             <div key={idx} className="bg-white/2 p-3 rounded-xl border border-white/5 text-xs">
                               <div className="flex justify-between font-bold text-white">
                                 <span>{cost.area}</span>
@@ -365,10 +419,12 @@ export default function BusinessInsights({ getCsrfToken }) {
                     <GlassCard className="border border-white/5">
                       <h3 className="text-base font-bold text-white mb-3">Strategic Growth Opportunities</h3>
                       <div className="space-y-3">
-                        {(result.growth_opportunities || []).map((opp, idx) => (
+                        {(Array.isArray(result.growth_opportunities) ? result.growth_opportunities : []).map((opp, idx) => (
                           <div key={idx} className="bg-white/2 p-3.5 rounded-xl border border-white/5 text-xs flex justify-between items-center gap-4">
                             <div>
-                              <h4 className="font-bold text-white">{opp.opportunity || opp}</h4>
+                              <h4 className="font-bold text-white">
+                                {typeof opp === 'object' && opp !== null ? (opp.title || opp.opportunity || '') : opp}
+                              </h4>
                               {opp.revenue_impact && <p className="text-gray-400 mt-1">{opp.revenue_impact}</p>}
                             </div>
                             {opp.score && (
@@ -386,7 +442,7 @@ export default function BusinessInsights({ getCsrfToken }) {
                 {/* 3. RECOMMENDATIONS */}
                 {activeTab === 'recommendations' && (
                   <div className="space-y-4">
-                    {(result.strategic_recommendations || []).map((rec, idx) => (
+                    {(Array.isArray(result.strategic_recommendations) ? result.strategic_recommendations : []).map((rec, idx) => (
                       <GlassCard key={idx} className="border border-white/5 flex flex-col md:flex-row justify-between gap-4">
                         <div className="space-y-1">
                           <h4 className="text-sm font-bold text-white">{rec.recommendation}</h4>

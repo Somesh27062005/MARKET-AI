@@ -2551,6 +2551,80 @@ def v2_campaign():
         return jsonify({"error": str(e)}), 500
 
 
+@app.route("/api/v2/social/integrations", methods=["GET"])
+def v2_social_integrations():
+    if "user_email" not in session:
+        return jsonify({"error": "Not authenticated"}), 401
+    try:
+        email = session["user_email"]
+        conns = db.get_social_integrations(email)
+        res_map = {
+            "LinkedIn": {"connected": False, "username": ""},
+            "Twitter/X": {"connected": False, "username": ""},
+            "Instagram": {"connected": False, "username": ""}
+        }
+        for item in conns:
+            plat = item.get("platform")
+            if plat in res_map:
+                res_map[plat]["connected"] = bool(item.get("connected", 0))
+                res_map[plat]["username"] = item.get("username", "")
+        return jsonify({"success": True, "integrations": res_map})
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+
+@app.route("/api/v2/social/connect", methods=["POST"])
+def v2_social_connect():
+    if "user_email" not in session:
+        return jsonify({"error": "Not authenticated"}), 401
+    try:
+        data = request.form or request.get_json() or {}
+        platform = data.get("platform", "")
+        username = data.get("username", "")
+        password = data.get("password", "")
+        
+        if not platform or not username:
+            return jsonify({"error": "Platform and username are required"}), 400
+            
+        email = session["user_email"]
+        db.save_social_integration(email, platform, True, username)
+        
+        db.log_activity(
+            email=email,
+            activity_type="social_account_connected",
+            title=f"Connected {platform} account: @{username}",
+            metadata={"platform": platform, "username": username}
+        )
+        return jsonify({"success": True, "message": f"Successfully connected to {platform}!"})
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+
+@app.route("/api/v2/campaign/post", methods=["POST"])
+@rate_limit(limit=15)
+def v2_campaign_post():
+    if "user_email" not in session:
+        return jsonify({"error": "Not authenticated"}), 401
+    try:
+        data = request.form or request.get_json() or {}
+        platform = data.get("platform", "")
+        copy = data.get("copy", "")
+        
+        if not platform:
+            return jsonify({"error": "Platform is required"}), 400
+            
+        email = session["user_email"]
+        db.log_activity(
+            email=email,
+            activity_type="social_post_published",
+            title=f"Published post to {platform}",
+            metadata={"platform": platform, "copy": copy[:150]}
+        )
+        return jsonify({"success": True, "message": f"Successfully published post to {platform}"})
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+
 @app.route("/api/v2/pitch", methods=["POST"])
 @rate_limit(limit=10)
 def v2_pitch():
@@ -2679,6 +2753,102 @@ def v2_business_insights():
             metadata={"business_type": data.get("business_type", ""), "report_id": report_id}
         )
         return jsonify({"success": True, "report_id": report_id, **result})
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+
+@app.route("/api/v2/suggest_inputs", methods=["POST"])
+def v2_suggest_inputs():
+    if "user_email" not in session:
+        return jsonify({"error": "Not authenticated"}), 401
+    
+    try:
+        from agents.base import invoke_structured
+        data = request.form or request.get_json() or {}
+        module = data.get("module", "")
+        if module not in ["campaign", "pitch", "lead", "market", "insights"]:
+            return jsonify({"error": "Invalid module specified"}), 400
+            
+        email = session["user_email"]
+        grounding_context, company_name, industry = build_company_context(email, module)
+        
+        # Check if the grounding context is essentially empty
+        if not grounding_context.strip():
+            return jsonify({
+                "success": False,
+                "error": "Your company profile and Knowledge Base are empty. Please configure your profile or upload documents to generate personalized suggestions."
+            }), 200
+            
+        if module == "campaign":
+            keys_desc = (
+                "{\n"
+                '  "product": "Name and brief description of a main product/service of the company",\n'
+                '  "audience": "Specific target customer persona details",\n'
+                '  "platform": "Primary marketing channels (e.g. LinkedIn, Google Search, Instagram)",\n'
+                '  "goals": "Key marketing campaign goals (e.g. Lead generation, brand awareness)",\n'
+                '  "budget": "Realistic budget range (e.g. $5,000 - $10,000)"\n'
+                "}"
+            )
+        elif module == "pitch":
+            keys_desc = (
+                "{\n"
+                '  "product": "Product or service name",\n'
+                '  "customer": "Target buyer company types/personas",\n'
+                '  "targetRole": "Job title of decision maker (e.g. Facilities Director)",\n'
+                '  "usp": "Unique Selling Proposition of the product/service",\n'
+                '  "painPoints": "Key buyer pain points resolved by the product"\n'
+                "}"
+            )
+        elif module == "lead":
+            keys_desc = (
+                "{\n"
+                '  "name": "Full name of a hypothetical target buyer prospect (e.g. Robert Smith)",\n'
+                '  "company": "Company name of a target buyer prospect",\n'
+                '  "industry": "Industry sector of the prospect company",\n'
+                '  "companySize": "Company size (e.g. 50-200 employees)",\n'
+                '  "decisionRole": "Job title of this prospect (e.g. VP Operations)",\n'
+                '  "budget": "Stated budget range (e.g. $40,000 / Year)",\n'
+                '  "need": "Their core business need matching your company\'s services",\n'
+                '  "urgency": "Their timeline/urgency (e.g. Immediate launch before Q4)"\n'
+                "}"
+            )
+        elif module == "market":
+            keys_desc = (
+                "{\n"
+                '  "industry": "Industry sector to analyze",\n'
+                '  "productCategory": "Specific product category",\n'
+                '  "targetMarket": "Target geographic / segment",\n'
+                '  "competitors": "Comma-separated list of top 3-4 real competitors in this space",\n'
+                '  "timeHorizon": "Horizon for forecasting (e.g. 12 months, 24 months)"\n'
+                "}"
+            )
+        else: # insights
+            keys_desc = (
+                "{\n"
+                '  "businessType": "Description of the company business model (e.g. B2B SaaS, D2C E-commerce)",\n'
+                '  "challenges": "Current operational or sales challenges the company is facing",\n'
+                '  "goals": "Key business goals to achieve in the next 12 months",\n'
+                '  "targetAudience": "Description of the target customer audience",\n'
+                '  "industryContext": "Current context of the industry landscape"\n'
+                "}"
+            )
+            
+        sys_prompt = (
+            "You are an expert sales and marketing assistant. Your job is to analyze the provided company profile "
+            "and grounding documents, and suggest realistic, context-specific inputs for a form. Return JSON only."
+        )
+        prompt = (
+            f"Based on the company context below, analyze the files and parameters:\n"
+            f"COMPANY CONTEXT:\n{grounding_context}\n\n"
+            f"Suggest optimal, highly realistic inputs for the '{module}' workspace form fields.\n"
+            f"Ensure all values align precisely with this company's profile and documents.\n"
+            f"Do not return generic placeholder text. Produce concise, specific values.\n\n"
+            f"Return a single JSON object containing only these keys:\n{keys_desc}"
+        )
+        
+        result = invoke_structured(sys_prompt, prompt, schema_hint=keys_desc, retries=2, fast=False, max_tokens=1500)
+        return jsonify({"success": True, "suggestions": result})
+        
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 

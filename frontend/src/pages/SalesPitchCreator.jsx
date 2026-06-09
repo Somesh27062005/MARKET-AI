@@ -16,15 +16,51 @@ import GlassCard from '../components/GlassCard.jsx';
 import ChatAssistant from '../components/ChatAssistant.jsx';
 
 export default function SalesPitchCreator({ getCsrfToken }) {
-  const [product, setProduct] = useState('Smart Office Climate Control System');
-  const [customer, setCustomer] = useState('Commercial Real Estate Owners & Property Managers');
-  const [targetRole, setTargetRole] = useState('Facilities Director');
-  const [usp, setUsp] = useState('Reduces commercial energy consumption by 30%, integrates with legacy HVAC in under an hour');
-  const [painPoints, setPainPoints] = useState('Escalating energy utility costs, occupant comfort complaints, lack of centralized remote control');
+  const [product, setProduct] = useState('');
+  const [customer, setCustomer] = useState('');
+  const [targetRole, setTargetRole] = useState('');
+  const [usp, setUsp] = useState('');
+  const [painPoints, setPainPoints] = useState('');
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState(null);
   const [activeTab, setActiveTab] = useState('pitch');
   const [error, setError] = useState('');
+  const [suggesting, setSuggesting] = useState(false);
+
+  const handleSuggestInputs = async () => {
+    setSuggesting(true);
+    setError('');
+    try {
+      const res = await fetch('/api/v2/suggest_inputs', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-CSRF-Token': getCsrfToken()
+        },
+        body: JSON.stringify({ module: 'pitch' })
+      });
+      const data = await res.json();
+      if (res.ok) {
+        if (data.success && data.suggestions) {
+          const s = data.suggestions;
+          setProduct(s.product || '');
+          setCustomer(s.customer || '');
+          setTargetRole(s.targetRole || '');
+          setUsp(s.usp || '');
+          setPainPoints(s.painPoints || '');
+        } else {
+          setError(data.error || 'Failed to retrieve suggestions.');
+        }
+      } else {
+        setError(data.error || 'Failed to connect to assistant.');
+      }
+    } catch (err) {
+      console.error(err);
+      setError('Communication error when fetching suggestions.');
+    } finally {
+      setSuggesting(false);
+    }
+  };
 
   const handleGenerate = async (e) => {
     e.preventDefault();
@@ -110,9 +146,27 @@ export default function SalesPitchCreator({ getCsrfToken }) {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-start">
         {/* Config card */}
         <GlassCard className="lg:col-span-1 border border-white/5">
-          <div className="flex items-center space-x-2 border-b border-white/5 pb-3 mb-6">
-            <Sparkles className="w-5 h-5 text-indigo-400" />
-            <h2 className="text-sm font-semibold uppercase tracking-wider text-white">Sales Parameters</h2>
+          <div className="flex items-center justify-between border-b border-white/5 pb-3 mb-6">
+            <div className="flex items-center space-x-2">
+              <Sparkles className="w-5 h-5 text-indigo-400" />
+              <h2 className="text-sm font-semibold uppercase tracking-wider text-white">Sales Parameters</h2>
+            </div>
+            <button
+              type="button"
+              onClick={handleSuggestInputs}
+              disabled={suggesting}
+              className="text-[10px] font-bold bg-indigo-600/10 hover:bg-indigo-600/20 text-indigo-400 px-2.5 py-1 rounded-lg border border-indigo-500/10 flex items-center space-x-1 transition-all disabled:opacity-40"
+              title="Auto-fill form inputs based on your company context & uploaded knowledge base documents"
+            >
+              {suggesting ? (
+                <div className="w-3.5 h-3.5 border-2 border-indigo-400 border-t-transparent rounded-full animate-spin"></div>
+              ) : (
+                <>
+                  <Sparkles className="w-3 h-3" />
+                  <span>Suggest</span>
+                </>
+              )}
+            </button>
           </div>
 
           <form onSubmit={handleGenerate} className="space-y-4">
@@ -287,10 +341,10 @@ export default function SalesPitchCreator({ getCsrfToken }) {
                     <div className="pt-6 border-t border-white/5">
                       <h3 className="text-base font-bold text-white mb-3">{result.value_proposition?.headline || 'Core Value Propositions'}</h3>
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        {(result.value_proposition?.benefits || []).map((ben, i) => (
+                        {(Array.isArray(result.value_proposition?.benefits) ? result.value_proposition.benefits : []).map((ben, i) => (
                           <div key={i} className="bg-white/2 p-3.5 rounded-xl border border-white/5 flex items-start space-x-3">
                             <CheckCircle className="w-5 h-5 text-indigo-400 shrink-0 mt-0.5" />
-                            <span className="text-xs text-gray-300 leading-relaxed">{ben}</span>
+                            <span className="text-xs text-gray-300 leading-relaxed">{typeof ben === 'object' && ben !== null ? JSON.stringify(ben) : ben}</span>
                           </div>
                         ))}
                       </div>
@@ -314,7 +368,7 @@ export default function SalesPitchCreator({ getCsrfToken }) {
                 {/* 2. OBJECTIONS */}
                 {activeTab === 'objections' && (
                   <div className="space-y-4">
-                    {(result.objection_handling || []).map((item, idx) => (
+                    {(Array.isArray(result.objection_handling) ? result.objection_handling : []).map((item, idx) => (
                       <GlassCard key={idx} className="border border-white/5">
                         <div className="flex items-center space-x-2 text-rose-400 font-semibold text-xs uppercase tracking-wider mb-2">
                           <ShieldAlert className="w-4 h-4" />
@@ -335,10 +389,10 @@ export default function SalesPitchCreator({ getCsrfToken }) {
                     <GlassCard className="border border-white/5">
                       <h3 className="text-base font-bold text-white mb-3">Discovery Questions</h3>
                       <div className="space-y-2">
-                        {(result.discovery_questions || []).map((q, i) => (
+                        {(Array.isArray(result.discovery_questions) ? result.discovery_questions : []).map((q, i) => (
                           <div key={i} className="bg-white/2 p-3 rounded-xl border border-white/5 text-xs text-gray-300 flex items-start space-x-2">
                             <span className="text-indigo-400 font-bold">{i+1}.</span>
-                            <span>{q}</span>
+                            <span>{typeof q === 'object' && q !== null ? JSON.stringify(q) : q}</span>
                           </div>
                         ))}
                       </div>
@@ -348,11 +402,15 @@ export default function SalesPitchCreator({ getCsrfToken }) {
                     <GlassCard className="border border-white/5">
                       <h3 className="text-base font-bold text-white mb-3">Discovery Meeting Agenda</h3>
                       <div className="space-y-3 pl-4 border-l border-white/5">
-                        {(result.meeting_agenda || []).map((ag, i) => (
+                        {(Array.isArray(result.meeting_agenda) ? result.meeting_agenda : []).map((ag, i) => (
                           <div key={i} className="relative text-xs text-gray-300">
                             <div className="absolute -left-[23px] top-1 w-2.5 h-2.5 rounded-full bg-indigo-500"></div>
                             <span className="font-semibold text-white block">Step {i+1}</span>
-                            <span className="text-gray-400">{ag}</span>
+                            <span className="text-gray-400">
+                              {typeof ag === 'object' && ag !== null 
+                                ? `${ag.time ? `[${ag.time}] ` : ''}${ag.topic || ''}${ag.goal ? ` - Goal: ${ag.goal}` : ''}`
+                                : ag}
+                            </span>
                           </div>
                         ))}
                       </div>
@@ -375,10 +433,10 @@ export default function SalesPitchCreator({ getCsrfToken }) {
                     <GlassCard className="border border-white/5">
                       <h3 className="text-base font-bold text-white mb-3">Proposal Section Outline</h3>
                       <div className="grid grid-cols-2 gap-3 text-xs text-gray-300">
-                        {(result.proposal_outline || []).map((sec, i) => (
+                        {(Array.isArray(result.proposal_outline) ? result.proposal_outline : []).map((sec, i) => (
                           <div key={i} className="bg-white/2 p-2.5 rounded-lg border border-white/5 flex items-center space-x-2">
                             <span className="w-5 h-5 rounded-full bg-indigo-500/10 text-indigo-400 flex items-center justify-center font-bold text-[10px]">{i+1}</span>
-                            <span>{sec}</span>
+                            <span>{typeof sec === 'object' && sec !== null ? JSON.stringify(sec) : sec}</span>
                           </div>
                         ))}
                       </div>

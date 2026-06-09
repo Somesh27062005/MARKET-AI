@@ -428,6 +428,7 @@ CAMPAIGN_SCHEMA = """{
   "kpi_commentary": "string",
   "content_ideas": [{"title": "string", "format": "string", "platform": "string", "description": "string"}],
   "ad_copies": [{"headline": "string", "body": "string", "cta": "string", "platform": "string"}],
+  "social_media_posts": [{"platform": "string", "copy": "string", "media_suggestion": "string"}],
   "cta_suggestions": ["string"],
   "estimated_reach": "string",
   "estimated_ctr": "string",
@@ -724,6 +725,23 @@ def get_campaign_fallback(product, audience, platform, budget, goals, company_na
             }
         ],
         "cta_suggestions": ["Request Custom Demo", "Calculate Your ROI", "Read Client Success Story", "Access Free Trial"],
+        "social_media_posts": [
+            {
+                "platform": "LinkedIn",
+                "copy": f"Is your team bogged down by manual workflows? 📉 With {company_name}'s {product}, you can automate operations, reduce manual errors, and scale efficiency seamlessly. Read our latest insights to see how we help leaders achieve high-impact business outcomes. #Efficiency #Operations #B2B",
+                "media_suggestion": "An infographic showing manual workflows timeline vs. automated timeline with a clear timeline comparison."
+            },
+            {
+                "platform": "Twitter/X",
+                "copy": f"Stop letting manual processes stall your growth. 🚀 {product} by {company_name} deploys in days, not months, delivering real-time operations tracking with robust security. Get your custom briefing: [Link] #WorkforceEfficiency #TechSolutions",
+                "media_suggestion": "A product demo GIF showing the user dashboard auto-filling details."
+            },
+            {
+                "platform": "Instagram",
+                "copy": f"Modern operations require modern solutions. 💡 Designed for {audience}, {product} helps streamline departmental handoffs and secure operations under one single dashboard.\n\n👉 Click the link in bio to book your free trial! #MarketingStrategy #TechSolutions #Operations",
+                "media_suggestion": "A clean visual showing an operations manager looking at a dashboard with positive KPIs."
+            }
+        ],
         "estimated_reach": "185,500",
         "estimated_ctr": "1.75%",
         "estimated_cvr": "3.20%",
