@@ -10,12 +10,12 @@
 |---------|-------------|
 | **Campaign Generator** | Multi-channel marketing campaign designer (LinkedIn, Facebook, Email, etc.) featuring content ideas, ad copies, visual vibe suggestions, and editorial calendars. |
 | **Sales Pitch Creator** | Craft highly targeted, personalized sales pitches containing elevator pitches, core value propositions, customer pain points, objection handling, and follow-up templates. |
+| **Logo Maker AI** | Instantly design modern logo concepts and store vector/base64 history in the database. |
 | **Lead Scoring (BANT)** | AI-powered lead qualification using BANT (Budget, Authority, Need, Timeline) parameters, probability mapping, and actionable conversion roadmaps. |
 | **Market Analysis** | Market sizing tools (TAM/SAM/SOM), SWOT analysis matrices, target audience profiling, and competitive intelligence databases. |
 | **Business Insights** | Multi-stage business diagnostics, bottleneck identification reports, Urgency-Impact matrices, and 30/60/90 day execution roadmaps. |
 | **Interactive Chat Assistant** | Specialized domain chat assistants (Marketing, Sales, General) built on top of chat histories for quick on-the-spot strategy brainstorming. |
 | **Ad Poster Maker** | Visual description prompt generator paired with direct Pollinations AI / Flux model integration for high-quality marketing graphics. |
-| **Logo Maker AI** | Instantly design modern logo concepts and store vector/base64 history in the database. |
 | **PPTX / Strategy Exporter** | Export strategic dashboards and multi-agent report briefs directly into custom presentation slide decks (`.pptx`). |
 
 ---
