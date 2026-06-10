@@ -9,7 +9,6 @@ import LeadScoring from './pages/LeadScoring.jsx';
 import MarketAnalysis from './pages/MarketAnalysis.jsx';
 import BusinessInsights from './pages/BusinessInsights.jsx';
 import CRM from './pages/CRM.jsx';
-import Workspace from './pages/Workspace.jsx';
 import KnowledgeBase from './pages/KnowledgeBase.jsx';
 import Profile from './pages/Profile.jsx';
 
@@ -81,7 +80,6 @@ export default function App() {
           <Route path="/market" element={<MarketAnalysis getCsrfToken={getCsrfToken} />} />
           <Route path="/insights" element={<BusinessInsights getCsrfToken={getCsrfToken} />} />
           <Route path="/crm" element={<CRM getCsrfToken={getCsrfToken} />} />
-          <Route path="/workspace" element={<Workspace getCsrfToken={getCsrfToken} />} />
           <Route path="/knowledge" element={<KnowledgeBase getCsrfToken={getCsrfToken} />} />
           <Route path="/profile" element={<Profile user={user} setUser={setUser} getCsrfToken={getCsrfToken} />} />
           <Route path="*" element={<Navigate to="/dashboard" replace />} />

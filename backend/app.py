@@ -1857,7 +1857,7 @@ def v2_market_summary():
     reports = database.get_analysis_reports(email, module="market", limit=1)
     latest_data = {}
     if reports:
-        latest_data = reports[0].get("result_dict", {})
+        latest_data = reports[0].get("result_json", {})
     
     # Sensible defaults if no analysis has been run yet
     market_size_data = {

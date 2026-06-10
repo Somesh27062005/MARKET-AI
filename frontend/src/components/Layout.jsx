@@ -8,7 +8,6 @@ import {
   TrendingUp, 
   Lightbulb, 
   Briefcase, 
-  Layers, 
   Database, 
   Settings, 
   LogOut, 
@@ -35,7 +34,6 @@ export default function Layout({ children, user, onLogout }) {
     { name: 'Market Analysis', path: '/market', icon: TrendingUp },
     { name: 'Business Insights', path: '/insights', icon: Lightbulb },
     { name: 'CRM Pipeline', path: '/crm', icon: Briefcase },
-    { name: 'Enterprise Analyzer', path: '/workspace', icon: Layers },
     { name: 'Knowledge Base', path: '/knowledge', icon: Database },
     { name: 'Profile & KPIs', path: '/profile', icon: Settings },
   ];
