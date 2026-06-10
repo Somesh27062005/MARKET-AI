@@ -1,0 +1,12 @@
+Flask
+Flask-CORS
+python-dotenv
+requests
+langchain>=0.3.0
+langchain-core>=0.3.0
+langchain-groq>=0.2.0
+langgraph>=0.2.0
+pydantic>=2.0
+reportlab
+oauthlib
+requests-oauthlib

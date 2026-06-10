@@ -111,9 +111,39 @@ export default function KnowledgeBase({ getCsrfToken }) {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-start">
-        {/* Left Column: Upload & Guide */}
-        <div className="lg:col-span-1 space-y-6">
-          {/* Upload Panel */}
+        {/* Column 1: Document Structure Guide */}
+        <div className="lg:col-span-1">
+          <GlassCard className="border border-white/5 space-y-4">
+            <div className="flex items-center space-x-2 border-b border-white/5 pb-3">
+              <Sparkles className="w-5 h-5 text-indigo-400" />
+              <h2 className="text-sm font-semibold uppercase tracking-wider text-white">Document Structure Guide</h2>
+            </div>
+            <p className="text-xs text-gray-400 leading-relaxed">
+              To get the most accurate and personalized outputs from the AI models, your context documents should ideally cover the following sections:
+            </p>
+            <div className="space-y-3 pt-1 text-xs">
+              <div className="bg-white/2 p-2.5 rounded-xl border border-white/5">
+                <h4 className="font-bold text-white mb-1">🏢 Company & Brand</h4>
+                <p className="text-gray-400 text-[11px] leading-normal">Company name, sector, target market, and brand tone guidelines.</p>
+              </div>
+              <div className="bg-white/2 p-2.5 rounded-xl border border-white/5">
+                <h4 className="font-bold text-white mb-1">📦 Product & USPs</h4>
+                <p className="text-gray-400 text-[11px] leading-normal">Core features, tech specs, pricing tiers, and unique advantages.</p>
+              </div>
+              <div className="bg-white/2 p-2.5 rounded-xl border border-white/5">
+                <h4 className="font-bold text-white mb-1">👥 Target Customer Profile</h4>
+                <p className="text-gray-400 text-[11px] leading-normal">Ideal client profile (ICP), job titles, pain points, and triggers.</p>
+              </div>
+              <div className="bg-white/2 p-2.5 rounded-xl border border-white/5">
+                <h4 className="font-bold text-white mb-1">⚔️ Competitors & Positioning</h4>
+                <p className="text-gray-400 text-[11px] leading-normal">Direct/indirect rivals, SWOT outlines, and competitive differences.</p>
+              </div>
+            </div>
+          </GlassCard>
+        </div>
+
+        {/* Column 2: Upload Panel */}
+        <div className="lg:col-span-1">
           <GlassCard className="border border-white/5 space-y-6">
             <div className="flex items-center space-x-2 border-b border-white/5 pb-3">
               <Upload className="w-5 h-5 text-indigo-400" />
@@ -175,39 +205,10 @@ export default function KnowledgeBase({ getCsrfToken }) {
               </p>
             </div>
           </GlassCard>
-
-          {/* Document Content Guide */}
-          <GlassCard className="border border-white/5 space-y-4">
-            <div className="flex items-center space-x-2 border-b border-white/5 pb-3">
-              <Sparkles className="w-5 h-5 text-indigo-400" />
-              <h2 className="text-sm font-semibold uppercase tracking-wider text-white">Document Structure Guide</h2>
-            </div>
-            <p className="text-xs text-gray-400 leading-relaxed">
-              To get the most accurate and personalized outputs from the AI models, your context documents should ideally cover the following sections:
-            </p>
-            <div className="space-y-3 pt-1 text-xs">
-              <div className="bg-white/2 p-2.5 rounded-xl border border-white/5">
-                <h4 className="font-bold text-white mb-1">🏢 Company & Brand</h4>
-                <p className="text-gray-400 text-[11px] leading-normal">Company name, sector, target market, and brand tone guidelines.</p>
-              </div>
-              <div className="bg-white/2 p-2.5 rounded-xl border border-white/5">
-                <h4 className="font-bold text-white mb-1">📦 Product & USPs</h4>
-                <p className="text-gray-400 text-[11px] leading-normal">Core features, tech specs, pricing tiers, and unique advantages.</p>
-              </div>
-              <div className="bg-white/2 p-2.5 rounded-xl border border-white/5">
-                <h4 className="font-bold text-white mb-1">👥 Target Customer Profile</h4>
-                <p className="text-gray-400 text-[11px] leading-normal">Ideal client profile (ICP), job titles, pain points, and triggers.</p>
-              </div>
-              <div className="bg-white/2 p-2.5 rounded-xl border border-white/5">
-                <h4 className="font-bold text-white mb-1">⚔️ Competitors & Positioning</h4>
-                <p className="text-gray-400 text-[11px] leading-normal">Direct/indirect rivals, SWOT outlines, and competitive differences.</p>
-              </div>
-            </div>
-          </GlassCard>
         </div>
 
-        {/* Documents list */}
-        <div className="lg:col-span-2 space-y-6">
+        {/* Column 3: Grounded Documents Repository */}
+        <div className="lg:col-span-1">
           <GlassCard className="border border-white/5">
             <div className="flex items-center space-x-2 border-b border-white/5 pb-3 mb-6">
               <Database className="w-5 h-5 text-indigo-400" />
