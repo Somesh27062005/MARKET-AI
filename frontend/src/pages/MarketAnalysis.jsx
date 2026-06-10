@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { useLocation } from 'react-router-dom';
 import { 
   TrendingUp, 
   Sparkles, 
@@ -30,6 +31,48 @@ export default function MarketAnalysis({ getCsrfToken }) {
   const [activeTab, setActiveTab] = useState('swot');
   const [error, setError] = useState('');
   const [suggesting, setSuggesting] = useState(false);
+  const location = useLocation();
+
+  useEffect(() => {
+    if (location.state?.loadReportId) {
+      const reportId = location.state.loadReportId;
+      window.history.replaceState({}, document.title);
+      
+      const loadReport = async () => {
+        setLoading(true);
+        setError('');
+        try {
+          const res = await fetch(`/api/v2/reports/${reportId}`);
+          if (res.ok) {
+            const data = await res.json();
+            if (data.success && data.report) {
+              const r = data.report;
+              if (r.input_dict) {
+                if (r.input_dict.industry !== undefined) setIndustry(r.input_dict.industry || '');
+                if (r.input_dict.product_category !== undefined) setProductCategory(r.input_dict.product_category || r.input_dict.productCategory || '');
+                if (r.input_dict.target_market !== undefined) setTargetMarket(r.input_dict.target_market || r.input_dict.targetMarket || '');
+                if (r.input_dict.competitors !== undefined) setCompetitorsRaw(r.input_dict.competitors || r.input_dict.competitorsRaw || '');
+                if (r.input_dict.time_horizon !== undefined) setTimeHorizon(r.input_dict.time_horizon || r.input_dict.timeHorizon || '');
+              }
+              if (r.result_dict) {
+                setResult(r.result_dict);
+              }
+            } else {
+              setError(data.error || 'Failed to load report.');
+            }
+          } else {
+            setError('Failed to fetch report from server.');
+          }
+        } catch (err) {
+          console.error(err);
+          setError('Error loading report.');
+        } finally {
+          setLoading(false);
+        }
+      };
+      loadReport();
+    }
+  }, [location.state]);
 
   const handleSuggestInputs = async () => {
     setSuggesting(true);

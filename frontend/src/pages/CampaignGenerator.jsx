@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { useLocation } from 'react-router-dom';
 import { 
   Send, 
   Sparkles, 
@@ -31,6 +32,48 @@ export default function CampaignGenerator({ getCsrfToken }) {
   const [suggesting, setSuggesting] = useState(false);
   const [postingStates, setPostingStates] = useState({});
   const [toast, setToast] = useState(null);
+  const location = useLocation();
+
+  useEffect(() => {
+    if (location.state?.loadReportId) {
+      const reportId = location.state.loadReportId;
+      window.history.replaceState({}, document.title);
+      
+      const loadReport = async () => {
+        setLoading(true);
+        setError('');
+        try {
+          const res = await fetch(`/api/v2/reports/${reportId}`);
+          if (res.ok) {
+            const data = await res.json();
+            if (data.success && data.report) {
+              const r = data.report;
+              if (r.input_dict) {
+                if (r.input_dict.product !== undefined) setProduct(r.input_dict.product || '');
+                if (r.input_dict.audience !== undefined) setAudience(r.input_dict.audience || '');
+                if (r.input_dict.platform !== undefined) setPlatform(r.input_dict.platform || '');
+                if (r.input_dict.goals !== undefined) setGoals(r.input_dict.goals || '');
+                if (r.input_dict.budget !== undefined) setBudget(r.input_dict.budget || '');
+              }
+              if (r.result_dict) {
+                setResult(r.result_dict);
+              }
+            } else {
+              setError(data.error || 'Failed to load report.');
+            }
+          } else {
+            setError('Failed to fetch report from server.');
+          }
+        } catch (err) {
+          console.error(err);
+          setError('Error loading report.');
+        } finally {
+          setLoading(false);
+        }
+      };
+      loadReport();
+    }
+  }, [location.state]);
 
   const showToast = (message, type = 'success') => {
     setToast({ message, type });
