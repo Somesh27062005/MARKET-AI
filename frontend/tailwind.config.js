@@ -39,9 +39,8 @@ export default {
           '100%': { opacity: '1', transform: 'translateY(0)' },
         },
         float: {
-          '0%, 100%': { transform: 'translateY(0px) rotate(0deg)' },
-          '33%': { transform: 'translateY(-20px) rotate(5deg)' },
-          '66%': { transform: 'translateY(10px) rotate(-3deg)' },
+          '0%, 100%': { transform: 'translate3d(0, 0, 0)' },
+          '50%': { transform: 'translate3d(0, -20px, 0)' },
         },
       },
     },

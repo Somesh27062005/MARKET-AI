@@ -211,11 +211,11 @@ export default function LeadScoring({ getCsrfToken }) {
               type="button"
               onClick={handleSuggestInputs}
               disabled={suggesting}
-              className="text-[10px] font-bold bg-indigo-600/10 hover:bg-indigo-600/20 text-indigo-400 px-2.5 py-1 rounded-lg border border-indigo-500/10 flex items-center space-x-1 transition-all disabled:opacity-40"
+              className="text-[10px] font-bold bg-indigo-600 hover:bg-indigo-700 text-white px-2.5 py-1 rounded-lg border border-indigo-500/25 flex items-center space-x-1 transition-all disabled:opacity-40 shadow-sm"
               title="Auto-fill form inputs based on your company context & uploaded knowledge base documents"
             >
               {suggesting ? (
-                <div className="w-3.5 h-3.5 border-2 border-indigo-400 border-t-transparent rounded-full animate-spin"></div>
+                <div className="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
               ) : (
                 <>
                   <Sparkles className="w-3 h-3" />
@@ -482,7 +482,7 @@ export default function LeadScoring({ getCsrfToken }) {
                     <GlassCard className="border border-white/5">
                       <h3 className="text-base font-bold text-white mb-3">Buying Intent Signals</h3>
                       <div className="space-y-3">
-                        {(result.buying_intent?.signals || []).map((sig, idx) => (
+                        {(Array.isArray(result.buying_intent?.signals) ? result.buying_intent.signals : []).map((sig, idx) => (
                           <div key={idx} className="bg-white/2 p-3 rounded-xl border border-white/5 text-xs flex justify-between items-start">
                             <div className="space-y-1">
                               <h4 className="font-bold text-white">{sig.signal}</h4>
@@ -500,7 +500,7 @@ export default function LeadScoring({ getCsrfToken }) {
                     <GlassCard className="border border-white/5">
                       <h3 className="text-base font-bold text-white mb-3">Identified Risk Factors</h3>
                       <div className="space-y-3">
-                        {(result.risk_factors || []).map((risk, idx) => (
+                        {(Array.isArray(result.risk_factors) ? result.risk_factors : []).map((risk, idx) => (
                           <div key={idx} className="bg-white/2 p-3.5 rounded-xl border border-white/5 text-xs">
                             <div className="flex items-center justify-between font-bold text-white mb-2">
                               <h4 className="flex items-center space-x-2">

@@ -4,6 +4,14 @@ and the Groq LLM factory for all multi-agent graphs.
 """
 import os, json, re, textwrap
 import sys
+from dotenv import load_dotenv
+
+# Robust load dotenv from root folder
+env_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "..", ".env")
+if os.path.exists(env_path):
+    load_dotenv(env_path)
+else:
+    load_dotenv()
 
 # Redirect standard error (fd 2) at the OS level to a safe process-specific log file to prevent OS-level Errno 22 crashes
 try:
@@ -347,111 +355,72 @@ CAMPAIGN_SCHEMA = """{
   "strategic_goals": [
     {
       "goal_name": "string",
-      "business_context": "string",
-      "why_it_matters": "string",
-      "expected_impact": "string",
-      "success_metrics": "string",
-      "risks": "string",
-      "mitigation_plan": "string"
+      "business_context": "string"
     }
   ],
-  "expected_outcomes": {
-    "revenue_impact": "string",
-    "lead_impact": "string",
-    "brand_impact": "string",
-    "market_position_impact": "string",
-    "customer_retention_impact": "string"
-  },
   "persona_profile": {
-    "job_titles": ["string"],
-    "responsibilities": "string",
     "business_challenges": "string",
     "pain_points": ["string"],
-    "buying_motivations": ["string"],
-    "decision_triggers": ["string"],
-    "common_objections": ["string"],
-    "preferred_communication_channels": ["string"],
-    "preferred_content_types": ["string"],
-    "purchase_journey_behaviour": "string",
-    "budget_authority": "string",
-    "expected_sales_cycle": "string"
+    "buying_motivations": ["string"]
   },
-  "funnel_analysis": {
-    "awareness_stage": {
-      "objective": "string",
-      "target_audience_behaviour": "string",
-      "recommended_channels": ["string"],
-      "expected_results": "string",
+  "funnel": {
+    "awareness": {
+      "tactics": ["string"],
+      "kpis": ["string"],
       "budget_pct": 0
     },
-    "consideration_stage": {
-      "customer_mindset": "string",
-      "key_content": ["string"],
-      "conversion_drivers": ["string"],
+    "consideration": {
+      "tactics": ["string"],
+      "kpis": ["string"],
       "budget_pct": 0
     },
-    "conversion_stage": {
-      "sales_activities": ["string"],
-      "closing_strategies": ["string"],
-      "performance_indicators": ["string"],
+    "conversion": {
+      "tactics": ["string"],
+      "kpis": ["string"],
       "budget_pct": 0
-    },
-    "retention_stage": {
-      "customer_success_activities": ["string"],
-      "upsell_opportunities": ["string"],
-      "loyalty_strategy": "string"
     }
   },
-  "budget_allocation_rationale": [
+  "budget_allocation": [
     {
       "channel": "string",
-      "allocation_pct": 0,
-      "reasoning": "string",
-      "expected_roi": "string",
-      "advantages": ["string"],
-      "risks": ["string"],
-      "success_metrics": ["string"]
+      "percent": 0,
+      "rationale": "string"
     }
   ],
-  "kpi_explanations": [
+  "kpis": [
     {
-      "kpi_name": "string",
-      "what_it_measures": "string",
-      "why_it_matters": "string",
-      "industry_benchmark": "string",
-      "expected_value": "string",
-      "success_threshold": "string",
-      "risk_indicators": "string",
-      "optimization_strategy": "string"
+      "metric": "string",
+      "target": "string",
+      "measurement": "string"
     }
   ],
-  "kpi_commentary": "string",
-  "content_ideas": [{"title": "string", "format": "string", "platform": "string", "description": "string"}],
-  "ad_copies": [{"headline": "string", "body": "string", "cta": "string", "platform": "string"}],
-  "social_media_posts": [{"platform": "string", "copy": "string", "media_suggestion": "string"}],
-  "cta_suggestions": ["string"],
-  "estimated_reach": "string",
-  "estimated_ctr": "string",
-  "estimated_cvr": "string",
-  "timeline_weeks": 0,
-  "roadmap_actions": [
+  "content_ideas": [
     {
-      "week_number": 0,
-      "week_theme": "string",
-      "actions": [
-        {
-          "action_name": "string",
-          "objective": "string",
-          "business_reasoning": "string",
-          "execution_steps": ["string"],
-          "required_resources": ["string"],
-          "responsible_team": "string",
-          "expected_kpi_impact": ["string"],
-          "dependencies": ["string"],
-          "risk_level": "Low|Medium|High",
-          "expected_outcome": "string"
-        }
-      ]
+      "title": "string",
+      "format": "string",
+      "platform": "string",
+      "description": "string"
+    }
+  ],
+  "ad_copies": [
+    {
+      "platform": "string",
+      "headline": "string",
+      "body": "string",
+      "cta": "string"
+    }
+  ],
+  "social_media_posts": [
+    {
+      "platform": "string",
+      "copy": "string"
+    }
+  ],
+  "calendar": [
+    {
+      "week": 0,
+      "theme": "string",
+      "tasks": ["string"]
     }
   ]
 }"""
@@ -537,15 +506,249 @@ def get_campaign_fallback(product, audience, platform, budget, goals, company_na
     if not audience:
         audience = "target segment"
     if not platform:
-        platform = "Multi-platform Mix"
+        platform = "LinkedIn, Twitter/X, Facebook, WhatsApp"
     if not budget:
         budget = "$5,000 - $25,000"
     if not goals:
         goals = "B2B Leads Generation"
 
+    # Parse requested platforms
+    requested_platforms = [p.strip().lower() for p in platform.split(',') if p.strip()]
+    if not requested_platforms:
+        requested_platforms = ["multi-platform"]
+
+    # All possible post templates
+    platform_mapping_fallbacks = {
+        "linkedin": {
+            "platform": "LinkedIn",
+            "copy": f"Is your team bogged down by manual workflows? 📉 With {company_name}'s {product}, you can automate operations, reduce manual errors, and scale efficiency seamlessly. Read our latest insights to see how we help leaders achieve high-impact business outcomes. #Efficiency #Operations #B2B"
+        },
+        "twitter": {
+            "platform": "Twitter/X",
+            "copy": f"Stop letting manual processes stall your growth. 🚀 {product} by {company_name} deploys in days, not months, delivering real-time operations tracking with robust security. Get your custom briefing: [Link] #WorkforceEfficiency #TechSolutions"
+        },
+        "x": {
+            "platform": "Twitter/X",
+            "copy": f"Stop letting manual processes stall your growth. 🚀 {product} by {company_name} deploys in days, not months, delivering real-time operations tracking with robust security. Get your custom briefing: [Link] #WorkforceEfficiency #TechSolutions"
+        },
+        "facebook": {
+            "platform": "Facebook",
+            "copy": f"Accelerate your team's output. {company_name} introduces {product}, a comprehensive operational system built to eliminate manual bottlenecks, secure business logic, and drive high-impact outcomes. Learn how we can help your team scale: [Link] #BusinessTech #Operations"
+        },
+        "whatsapp": {
+            "platform": "WhatsApp",
+            "copy": f"Hello! 👋 Discover how {company_name} helps you scale operations with {product}. Contact us to learn more! [Link]"
+        },
+        "google": {
+            "platform": "Google Search",
+            "copy": f"Ad Headline: Automate Your Operations | Try {product} Today\nAd Description: Boost efficiency, reduce manual errors, and scale seamlessly with {company_name}. Contact us for a free demo today."
+        },
+    }
+
+    filtered_posts = []
+    for req in requested_platforms:
+        found = False
+        for k, v in platform_mapping_fallbacks.items():
+            if k in req or req in k:
+                filtered_posts.append(v)
+                found = True
+                break
+        if not found:
+            filtered_posts.append({
+                "platform": req.capitalize(),
+                "copy": f"Discover how {company_name} helps you scale operations with {product}. Contact us to learn more!"
+            })
+
+    # Ad copy fallbacks
+    ad_copies_pool = [
+        {
+            "headline": f"Struggling with Department Inefficiencies? Try {product}.",
+            "body": f"Discover how {company_name} helps leaders automate workflows, reduce operational costs, and drive ROI. Get a custom briefing in under 5 minutes.",
+            "cta": "Get Free Demo",
+            "platform": "LinkedIn"
+        },
+        {
+            "headline": "Scale Operations Faster.",
+            "body": f"Eliminate manual bottlenecks. {company_name} provides robust, scalable capabilities designed specifically for your industry's needs.",
+            "cta": "Learn More",
+            "platform": "Google Search"
+        },
+        {
+            "headline": f"Deploy {product} in Days, Not Months.",
+            "body": "No complex coding. No security compromises. Learn why elite operations teams are switching to our modern, integrated system today.",
+            "cta": "Download Whitepaper",
+            "platform": "Twitter/X"
+        },
+        {
+            "headline": "Eliminate Manual Workflows.",
+            "body": f"Automate operations seamlessly with {company_name} {product}. Click to learn how we help businesses scale operations and reduce mistakes.",
+            "cta": "Sign Up",
+            "platform": "Facebook"
+        },
+        {
+            "headline": "Scale Operations with WhatsApp.",
+            "body": f"Get {product} by {company_name} to streamline workflows and get real-time briefings directly in your chat.",
+            "cta": "Connect Now",
+            "platform": "WhatsApp"
+        }
+    ]
+
+    filtered_ad_copies = []
+    for req in requested_platforms:
+        for ad in ad_copies_pool:
+            ad_plat = ad["platform"].lower()
+            if ad_plat in req or req in ad_plat:
+                filtered_ad_copies.append(ad)
+                break
+    if not filtered_ad_copies:
+        filtered_ad_copies = [ad_copies_pool[0]]
+
+    # Content ideas pool
+    content_ideas_pool = [
+        {
+            "title": f"The Definitive ROI Guide for {product}",
+            "format": "Ebook / PDF Report",
+            "platform": "LinkedIn",
+            "description": f"A data-backed analysis showing how companies in the {audience} space save time and costs by using {product}."
+        },
+        {
+            "title": "Automating Department Workflows: Best Practices",
+            "format": "Interactive Live Webinar",
+            "platform": "YouTube",
+            "description": "A deep dive into operational efficiency featuring case studies and live interactive software demonstrations."
+        },
+        {
+            "title": f"How to Overcome Legacy Bottlenecks with {company_name}",
+            "format": "Expert Video Case Study",
+            "platform": "LinkedIn Ads / Video Hub",
+            "description": "An interview-style video showcasing a client's success story, detailing metrics improvement and integration steps."
+        },
+
+        {
+            "title": f"Modernizing operations for {audience}",
+            "format": "Comparison Checklist",
+            "platform": "Twitter/X",
+            "description": "A comprehensive list comparing manual systems with automated solutions like ours."
+        },
+        {
+            "title": "Search Intent Landing Experience",
+            "format": "Landing Page Copy",
+            "platform": "Google Search",
+            "description": f"High-intent landing pages targeted at keywords related to automating operational tasks for {audience}."
+        },
+        {
+            "title": "Operational Success Stories",
+            "format": "Customer Review Article",
+            "platform": "Facebook",
+            "description": "Written case study featuring testimonials from heads of operations using our system."
+        },
+        {
+            "title": "Direct Updates via WhatsApp",
+            "format": "Instant Messaging Notifications",
+            "platform": "WhatsApp",
+            "description": "Guide on how to configure automated status updates and critical alerts directly to your team's chat."
+        }
+    ]
+
+    filtered_content_ideas = []
+    for req in requested_platforms:
+        for idea in content_ideas_pool:
+            idea_plat = idea["platform"].lower()
+            if idea_plat in req or req in idea_plat:
+                filtered_content_ideas.append(idea)
+                break
+    if not filtered_content_ideas:
+        filtered_content_ideas = [content_ideas_pool[0]]
+
+    # CPM estimation (average of selected platforms)
+    cpm_map = {
+        "linkedin": 45,
+        "twitter": 8,
+        "x": 8,
+        "google": 15,
+        "facebook": 12,
+        "whatsapp": 3,
+        "multi-platform": 18
+    }
+    cpm_vals = []
+    for req in requested_platforms:
+        matched = False
+        for k, v in cpm_map.items():
+            if k in req or req in k:
+                cpm_vals.append(v)
+                matched = True
+                break
+        if not matched:
+            cpm_vals.append(15) # Default CPM
+    cpm_val = sum(cpm_vals) / len(cpm_vals) if cpm_vals else 18
+
+    # Budget value estimation
+    budget_map = {
+        "under $1k": 800,
+        "$1k-$5k": 3000,
+        "$5k-$25k": 15000,
+        "$25k-$100k": 60000,
+        "$100k+": 250000
+    }
+    cleaned_budget = str(budget).lower().strip()
+    budget_val = 5000
+    for k, v in budget_map.items():
+        if k in cleaned_budget:
+            budget_val = v
+            break
+
+    calc_reach_val = int((budget_val / cpm_val) * 1000)
+    calc_reach = f"{calc_reach_val:,}" if calc_reach_val >= 1000 else str(calc_reach_val)
+
+    # CTR & CVR estimation (average of selected platforms)
+    ctr_map = {
+        "linkedin": 1.25,
+        "twitter": 0.85,
+        "x": 0.85,
+        "google": 3.40,
+        "facebook": 1.50,
+        "whatsapp": 2.00,
+        "multi-platform": 1.65
+    }
+    cvr_map = {
+        "linkedin": 2.20,
+        "twitter": 1.45,
+        "x": 1.45,
+        "google": 4.20,
+        "facebook": 2.60,
+        "whatsapp": 3.50,
+        "multi-platform": 2.75
+    }
+    ctr_vals = []
+    cvr_vals = []
+    for req in requested_platforms:
+        matched = False
+        for k, v in ctr_map.items():
+            if k in req or req in k:
+                ctr_vals.append(v)
+                cvr_vals.append(cvr_map[k])
+                matched = True
+                break
+        if not matched:
+            ctr_vals.append(1.65)
+            cvr_vals.append(2.75)
+    ctr_base = sum(ctr_vals) / len(ctr_vals) if ctr_vals else 1.65
+    cvr_base = sum(cvr_vals) / len(cvr_vals) if cvr_vals else 2.75
+
+    goals_lower = str(goals).lower()
+    if "lead" in goals_lower or "cvr" in goals_lower or "conversion" in goals_lower or "sale" in goals_lower:
+        cvr_base *= 1.2
+        ctr_base *= 0.95
+    elif "brand" in goals_lower or "awareness" in goals_lower or "reach" in goals_lower:
+        ctr_base *= 1.15
+        cvr_base *= 0.8
+
+    calc_ctr = f"{ctr_base:.2f}%"
+    calc_cvr = f"{cvr_base:.2f}%"
+
     return {
         "campaign_name": f"{company_name} {product} Launch & Growth Campaign",
-        "executive_campaign_overview": f"This campaign is strategically designed to position {product} as the leading solution for {audience} over the coming weeks. Our primary objective is to drive qualified lead acquisition and expand brand presence through a highly targeted {platform} channel distribution. With a monthly budget target of {budget}, the campaign targets specific buying triggers, addresses current market pain points, and delivers customized messaging angles that differentiate {company_name} from primary competitors.",
+        "executive_campaign_overview": f"This campaign is strategically designed to position {product} as the leading solution for {audience} over the coming weeks. Our primary objective is to drive qualified lead acquisition and expand brand presence through a highly targeted channel distribution. With a monthly budget target of {budget}, the campaign targets specific buying triggers, addresses current market pain points, and delivers customized messaging angles that differentiate {company_name} from primary competitors.",
         "strategic_goals": [
             {
                 "goal_name": "Qualified Lead Generation",
@@ -684,67 +887,13 @@ def get_campaign_fallback(product, audience, platform, budget, goals, company_na
             }
         ],
         "kpi_commentary": f"These KPIs are chosen to align marketing investment directly with sales efficiency and business health. By focusing on CPQL and sales velocity, we ensure {company_name} maximizes return on ad spend.",
-        "content_ideas": [
-            {
-                "title": f"The Definitve ROI Guide for {product}",
-                "format": "Ebook / PDF Report",
-                "platform": "LinkedIn / Website Resources",
-                "description": f"A data-backed analysis showing how companies in the {audience} space save time and costs by using {product}."
-            },
-            {
-                "title": "Automating Department Workflows: Best Practices",
-                "format": "Interactive Live Webinar",
-                "platform": "Zoom / YouTube Live",
-                "description": "A deep dive into operational efficiency featuring case studies and live interactive software demonstrations."
-            },
-            {
-                "title": f"How to Overcome Legacy Bottlenecks with {company_name}",
-                "format": "Expert Video Case Study",
-                "platform": "LinkedIn Ads / Video Hub",
-                "description": "An interview-style video showcasing a client's success story, detailing metrics improvement and integration steps."
-            }
-        ],
-        "ad_copies": [
-            {
-                "headline": f"Struggling with Department Inefficiencies? Try {product}.",
-                "body": f"Discover how {company_name} helps leaders automate workflows, reduce operational costs, and drive ROI. Get a custom briefing in under 5 minutes.",
-                "cta": "Get Free Demo",
-                "platform": "LinkedIn Ads"
-            },
-            {
-                "headline": "Scale Operations Faster.",
-                "body": f"Eliminate manual bottlenecks. {company_name} provides robust, scalable B2B capabilities designed specifically for your industry's needs.",
-                "cta": "Learn More",
-                "platform": "Google Search"
-            },
-            {
-                "headline": f"Deploy {product} in Days, Not Months.",
-                "body": "No complex coding. No security compromises. Learn why elite operations teams are switching to our modern, integrated system today.",
-                "cta": "Download Whitepaper",
-                "platform": "Multi-platform"
-            }
-        ],
+        "content_ideas": filtered_content_ideas,
+        "ad_copies": filtered_ad_copies,
         "cta_suggestions": ["Request Custom Demo", "Calculate Your ROI", "Read Client Success Story", "Access Free Trial"],
-        "social_media_posts": [
-            {
-                "platform": "LinkedIn",
-                "copy": f"Is your team bogged down by manual workflows? 📉 With {company_name}'s {product}, you can automate operations, reduce manual errors, and scale efficiency seamlessly. Read our latest insights to see how we help leaders achieve high-impact business outcomes. #Efficiency #Operations #B2B",
-                "media_suggestion": "An infographic showing manual workflows timeline vs. automated timeline with a clear timeline comparison."
-            },
-            {
-                "platform": "Twitter/X",
-                "copy": f"Stop letting manual processes stall your growth. 🚀 {product} by {company_name} deploys in days, not months, delivering real-time operations tracking with robust security. Get your custom briefing: [Link] #WorkforceEfficiency #TechSolutions",
-                "media_suggestion": "A product demo GIF showing the user dashboard auto-filling details."
-            },
-            {
-                "platform": "Instagram",
-                "copy": f"Modern operations require modern solutions. 💡 Designed for {audience}, {product} helps streamline departmental handoffs and secure operations under one single dashboard.\n\n👉 Click the link in bio to book your free trial! #MarketingStrategy #TechSolutions #Operations",
-                "media_suggestion": "A clean visual showing an operations manager looking at a dashboard with positive KPIs."
-            }
-        ],
-        "estimated_reach": "185,500",
-        "estimated_ctr": "1.75%",
-        "estimated_cvr": "3.20%",
+        "social_media_posts": filtered_posts,
+        "estimated_reach": calc_reach,
+        "estimated_ctr": calc_ctr,
+        "estimated_cvr": calc_cvr,
         "timeline_weeks": 8,
         "roadmap_actions": [
             {
@@ -953,7 +1102,7 @@ def get_lead_fallback(name, company, industry, budget, need, urgency, company_na
             "budget": {
                 "score": 80,
                 "assessment": f"Lead states a budget allocation of {budget}, which is fully qualified for our standard package pricing.",
-                "evidence": f"Budget range ({budget}) aligned with enterprise software tiers."
+                "evidence": f"Budget range ({budget}) aligned with standard industry pricing tiers."
             },
             "authority": {
                 "score": 75,
@@ -976,20 +1125,20 @@ def get_lead_fallback(name, company, industry, budget, need, urgency, company_na
             "score": 85,
             "signals": [
                 {"signal": "Visited pricing page twice in 24 hours", "strength": "High"},
-                {"signal": "Downloaded whitepaper on operations efficiency", "strength": "Medium"},
-                {"signal": "Requested custom demo via online portal", "strength": "High"}
+                {"signal": "Downloaded whitepaper on operational efficiency", "strength": "Medium"},
+                {"signal": "Requested custom demo or quote via online portal", "strength": "High"}
             ]
         },
         "risk_factors": [
             {
                 "risk": "Competitor evaluation in progress.",
                 "impact": "Medium",
-                "mitigation": "Highlight USPs early and offer a dedicated migration assistant."
+                "mitigation": "Highlight USPs early and offer a dedicated migration or onboarding assistant."
             },
             {
-                "risk": "Technical integration dependencies.",
+                "risk": "Technical or implementation dependencies.",
                 "impact": "Medium",
-                "mitigation": "Involve our solutions engineer in the next demo call to map out APIs."
+                "mitigation": "Involve our solutions engineering or implementation team in the next call to map out setup requirements."
             },
             {
                 "risk": "Budget approval delays from finance.",
@@ -1004,7 +1153,7 @@ def get_lead_fallback(name, company, industry, budget, need, urgency, company_na
                 "timeline": "Next 2 hours"
             },
             {
-                "action": "Send a personalized email containing client case studies in the technology sector.",
+                "action": f"Send a personalized email containing client case studies in the {industry} sector.",
                 "priority": "High",
                 "timeline": "Next 24 hours"
             },
@@ -1014,7 +1163,7 @@ def get_lead_fallback(name, company, industry, budget, need, urgency, company_na
                 "timeline": "Next 48 hours"
             },
             {
-                "action": "Prepare custom trial environment showing how we resolve need.",
+                "action": "Prepare custom demonstration or pricing proposal showing how we resolve need.",
                 "priority": "Medium",
                 "timeline": "Next 3 days"
             }
@@ -1023,7 +1172,7 @@ def get_lead_fallback(name, company, industry, budget, need, urgency, company_na
         "priority_level": "Critical",
         "crm_readiness": True,
         "score_breakdown": [
-            {"factor": "Budget Fit", "score": 24, "max": 30, "rationale": f"Stated budget of {budget} covers core platform costs but might limit add-on features."},
+            {"factor": "Budget Fit", "score": 24, "max": 30, "rationale": f"Stated budget of {budget} covers core product/service costs but might limit add-on features."},
             {"factor": "Authority Level", "score": 18, "max": 25, "rationale": "Buyer is a key influencer; need to loop in department head for final sign-off."},
             {"factor": "Need Severity", "score": 27, "max": 30, "rationale": f"Stated pain points around '{need}' perfectly match our primary solutions."},
             {"factor": "Timeline Urgency", "score": 13, "max": 15, "rationale": f"Timeline of '{urgency}' represents an active purchasing window."}
@@ -1034,11 +1183,11 @@ def get_market_fallback(industry, product_category, target_market, competitors, 
     if not company_name:
         company_name = "Enterprise"
     if not industry:
-        industry = "Enterprise Software"
+        industry = "Industrial & Services"
     if not product_category:
-        product_category = "AI Automation Tools"
+        product_category = "Premium Products"
     if not target_market:
-        target_market = "B2B SaaS / Global"
+        target_market = "Commercial Markets"
     if not competitors:
         competitors = "Competitor A, Competitor B"
 
@@ -1059,31 +1208,31 @@ def get_market_fallback(industry, product_category, target_market, competitors, 
             "currency": "USD"
         },
         "growth_drivers": [
-            "Increasing enterprise adoption of cloud-based automation systems.",
-            "Demand for immediate data analysis and automated strategic insights.",
-            "Rising operational costs forcing companies to streamline workflows.",
-            "Integrations with existing CRM and marketing tech stacks.",
-            "Transition from manual business research to real-time intelligence feeds."
+            f"Increasing demand for sustainable and cost-effective {product_category} solutions.",
+            "Rising operational efficiency requirements forcing organizations to streamline processes.",
+            f"Growing customer preferences for transparent supply chains and eco-friendly practices in {industry}.",
+            "Advancements in manufacturing, logistics, and delivery lowering distribution barriers.",
+            f"Expansion of modern procurement channels and digital outreach vectors for {product_category}."
         ],
         "market_risks": [
-            "Shifting data privacy regulations in international jurisdictions.",
-            "Rising customer acquisition costs across digital advertising channels.",
-            "Talent shortages in specialized AI engineering and product design.",
-            "Potential budget tightening in enterprise IT procurement.",
-            "Security concerns regarding cloud storage and data sovereignty."
+            "Regulatory compliance complexities in regional and international markets.",
+            "Rising costs of raw materials and energy supply chain disruptions.",
+            "Increasing competition from low-cost alternative providers.",
+            "Fluctuations in interest rates impacting capital expenditure budgets.",
+            "Labor market constraints and rising workforce acquisition costs."
         ],
         "competitors": [
             {
                 "name": comp_list[0],
-                "strengths": "Deep brand equity, wide distribution channel network, massive R&D resources.",
-                "weaknesses": "Complex implementation cycles, outdated user interface, rigid pricing structures.",
+                "strengths": "Deep brand equity, wide distribution channel network, massive resources.",
+                "weaknesses": "Complex implementation cycles, outdated customer experience, rigid pricing.",
                 "market_position": "Legacy Market Leader",
                 "threat_level": "High"
             },
             {
                 "name": comp_list[1],
-                "strengths": "Strong user adoption, excellent developer API libraries, low entry-level pricing.",
-                "weaknesses": "Limited advanced enterprise security controls, slow customer support response times.",
+                "strengths": "Strong user adoption, excellent API libraries and integrations, competitive pricing.",
+                "weaknesses": "Limited advanced enterprise security controls, slower customer support response.",
                 "market_position": "High-Growth Challenger",
                 "threat_level": "High"
             },
@@ -1123,7 +1272,7 @@ def get_market_fallback(industry, product_category, target_market, competitors, 
             ],
             "opportunities": [
                 f"Capture market share from clients dissatisfied with {comp_list[0]}'s pricing.",
-                "Expand presence in underserved regional sectors within Europe and APAC.",
+                f"Expand presence in underserved regional sectors within Europe and APAC for {product_category}.",
                 "Form strategic partnerships with digital consulting agencies."
             ],
             "threats": [
@@ -1132,42 +1281,42 @@ def get_market_fallback(industry, product_category, target_market, competitors, 
             ]
         },
         "pestel": {
-            "political": "Stable government support for digital transformation grants, offset by trade tariffs on cross-border software imports.",
-            "economic": "Moderate interest rates impacting corporate expansion budgets; rising demand for software that drives immediate cost savings.",
-            "social": "Increasing work-from-home trends require cloud-native tools that facilitate asynchronous team collaboration.",
-            "technological": "Advancements in large language models enable highly tailored outputs and automated workflows at fraction of cost.",
-            "environmental": "Growing demand for green data hosting providers and digital documentation over printed materials.",
-            "legal": "Tightening data compliance regulations require strict adherence to standards like GDPR, CCPA, and SOC 2."
+            "political": f"Government policies and regulation changes impacting import/export tariffs and trade corridors in {industry}.",
+            "economic": f"Fluctuations in raw material costs, energy prices, and interest rates affecting production margins in the {product_category} sector.",
+            "social": f"Shifting consumer preferences and buying behaviors prioritizing sustainable, high-quality offerings like {product_category}.",
+            "technological": f"Adoption of automation, smart manufacturing, and digital supply chain technologies to optimize operations in {industry}.",
+            "environmental": f"Strict sustainability compliance mandates and waste-reduction initiatives forcing operations to implement eco-friendly systems.",
+            "legal": f"Evolving labor standards, local environmental protection acts, and industry certifications governing the production and distribution of {product_category}."
         },
         "trends": [
             {
-                "trend": "Self-Serve Product Led Growth (PLG)",
+                "trend": "Sustainability and Green Compliance",
                 "impact_score": 88,
                 "timeframe": "12-18 months",
-                "description": "Buyers increasingly prefer starting with free trials and interactive sandbox environments before talking to sales."
+                "description": f"Growing demand for certified eco-friendly manufacturing processes and circular economy integration in {industry}."
             },
             {
-                "trend": "Data Sovereignty and Local Storage",
+                "trend": "Supply Chain Integration",
                 "impact_score": 82,
                 "timeframe": "6-12 months",
-                "description": "Enterprise clients require options to store sensitive data locally or in specific geographic clouds."
+                "description": f"Enterprise and mid-market clients requiring end-to-end transparency in logistics and material tracking for {product_category}."
             },
             {
-                "trend": "Workflow Consolidation",
+                "trend": "Digital Operations and Automation",
                 "impact_score": 79,
                 "timeframe": "18-24 months",
-                "description": "Organizations are moving away from multiple point solutions, choosing single platforms that cover multiple needs."
+                "description": f"Transition from legacy manual management systems to real-time status tracking and optimized inventory management in {industry}."
             }
         ],
         "opportunities": [
             {
-                "title": f"Mid-Market Legacy Displacement",
+                "title": f"Mid-Market Displacement of legacy {industry} providers",
                 "score": 90,
                 "effort": "Medium",
                 "revenue_potential": "High"
             },
             {
-                "title": "API-First Integration Partnerships",
+                "title": f"B2B Strategic Partnerships for {product_category} supply chains",
                 "score": 85,
                 "effort": "High",
                 "revenue_potential": "Medium"
@@ -1260,11 +1409,11 @@ def get_insights_fallback(business_type, challenges, goals, company_name) -> dic
     if not company_name:
         company_name = "Enterprise"
     if not business_type:
-        business_type = "B2B SaaS"
+        business_type = "industry sector"
     if not challenges:
-        challenges = "manual pipeline management, low conversion rates"
+        challenges = "manual tracking inefficiencies, resource constraints"
     if not goals:
-        goals = "double our qualified leads, reduce operational costs"
+        goals = "scale operational efficiency, reduce overhead costs"
 
     return {
         "opportunity_score": 68,
@@ -1273,15 +1422,15 @@ def get_insights_fallback(business_type, challenges, goals, company_name) -> dic
             {
                 "challenge": f"Inefficiencies in '{safe_split_get(challenges, 0, 'operations')}'",
                 "severity": "High",
-                "impact": "Slows sales cycle velocity, increases manual tracking errors, and reduces lead engagement speed."
+                "impact": "Slows operational velocity, increases manual tracking errors, and reduces customer engagement speed."
             },
             {
-                "challenge": "Fragmented data across marketing and CRM stacks",
+                "challenge": "Fragmented tracking across communication channels",
                 "severity": "Medium",
                 "impact": "Creates pipeline visibility blindspots, hindering data-driven decisions and scaling efforts."
             },
             {
-                "challenge": "Long sales cycle conversion paths",
+                "challenge": "Long sales and onboarding cycle conversion paths",
                 "severity": "Medium",
                 "impact": "Increases customer acquisition cost and limits cash-flow predictability."
             }
@@ -1289,42 +1438,42 @@ def get_insights_fallback(business_type, challenges, goals, company_name) -> dic
         "root_cause_analysis": [
             {
                 "problem": f"Stalled pipeline tracking: '{safe_split_get(challenges, 0, 'operations')}'",
-                "root_cause": "Absence of automated scoring workflows and standardized lead tracking triggers.",
-                "evidence": "Sales representatives spend over 12 hours weekly performing manual data entry and email follow-ups."
+                "root_cause": "Absence of standardized process tracking and workflow automation.",
+                "evidence": "Team members spend over 12 hours weekly performing manual data entry and email follow-ups."
             },
             {
                 "problem": "Low lead-to-opportunity conversion rate",
-                "root_cause": "Underutilized buyer intent signals and delay in engaging hot prospects.",
+                "root_cause": "Underutilized buyer intent signals and delay in engaging high-potential prospects.",
                 "evidence": "Average response time to inbound inquiries exceeds 18 hours."
             }
         ],
         "growth_opportunities": [
             {
-                "title": "Automated Intent Scoring integration",
+                "title": f"Automated customer feedback loop for {business_type}",
                 "score": 92,
                 "effort": "Medium",
                 "revenue_impact": "High"
             },
             {
-                "title": "Interactive Self-Serve Sandbox demo environment",
+                "title": f"Strategic partnership expansion in {business_type}",
                 "score": 88,
                 "effort": "High",
                 "revenue_impact": "High"
             },
             {
-                "title": "Automated Sales Pitch Deck generator custom tools",
+                "title": f"Optimizing workflow channels for resolving '{safe_split_get(challenges, 0, 'inefficiencies')}'",
                 "score": 85,
                 "effort": "Low",
                 "revenue_impact": "Medium"
             },
             {
-                "title": "Targeted Customer Case Study campaign",
+                "title": f"Targeted customer case study campaigns in {business_type}",
                 "score": 78,
                 "effort": "Low",
                 "revenue_impact": "Medium"
             },
             {
-                "title": "Tiered enterprise account referral plan",
+                "title": "Tiered loyalty and account growth packages",
                 "score": 70,
                 "effort": "Medium",
                 "revenue_impact": "Medium"
@@ -1332,69 +1481,69 @@ def get_insights_fallback(business_type, challenges, goals, company_name) -> dic
         ],
         "revenue_opportunities": [
             {
-                "source": "Upsell of custom analytics add-ons to top-tier accounts",
-                "potential": "$45,000 ARR boost",
+                "source": "Upselling premium packages and add-ons to key accounts",
+                "potential": "$45,000 revenue boost",
                 "timeline": "Next 60 days"
             },
             {
-                "source": "New B2B segment target packaging",
+                "source": f"Targeted launch of new features or product categories in {business_type}",
                 "potential": "$70,000 new pipeline",
                 "timeline": "Next 90 days"
             },
             {
-                "source": "Developer API access subscription tier",
-                "potential": "$30,000 ARR boost",
+                "source": "Value-added service subscriptions or contract extensions",
+                "potential": "$30,000 annual boost",
                 "timeline": "Next 120 days"
             },
             {
-                "source": "Enterprise support SLA premium pricing",
-                "potential": "$25,000 ARR boost",
+                "source": "Priority delivery and service agreements for elite clients",
+                "potential": "$25,000 revenue boost",
                 "timeline": "Next 60 days"
             }
         ],
         "cost_optimization": [
             {
-                "area": "Consolidating duplicate analytics tools",
+                "area": "Consolidating software and operational tool stack",
                 "potential_savings": "$12,000 Annually",
-                "action": "Audit current software stack and migrate active users to a single consolidated license."
+                "action": "Audit current operations stack and migrate users to consolidated platforms."
             },
             {
-                "area": "Automating manual lead entry tasks",
-                "potential_savings": "15 Hours/week per representative",
-                "action": "Deploy automated lead ingestion API directly connecting web forms to CRM."
+                "area": f"Streamlining processes to address '{safe_split_get(challenges, 0, 'manual tasks')}'",
+                "potential_savings": "15 Hours/week per team member",
+                "action": "Redesign workflow handoffs to automate communication triggers."
             },
             {
-                "area": "Optimizing search engine ad keywords spend",
+                "area": "Optimizing customer acquisition and marketing keyword spend",
                 "potential_savings": "$8,000 quarterly",
-                "action": "Exclude low-intent keywords and shift budget to long-tail comparison search terms."
+                "action": "Exclude low-intent search terms and focus budget on high-performing segments."
             },
             {
-                "area": "Standardizing support ticket replies with AI templates",
+                "area": "Standardizing onboarding and training guides with automated templates",
                 "potential_savings": "$6,000 Annually",
-                "action": "Integrate auto-responses for common questions in client support portal."
+                "action": "Build a centralized resource center for customer self-service and team training."
             }
         ],
         "strategic_recommendations": [
             {
-                "recommendation": "Deploy automated BANT scoring in CRM immediately.",
+                "recommendation": f"Standardize BANT qualification and pipeline stages for {business_type} leads.",
                 "priority": "High",
                 "impact": "High",
                 "effort": "Low"
             },
             {
-                "recommendation": "Set up instant Slack notifications for hot lead arrivals.",
+                "recommendation": "Configure instant notifications and alerts to speed up response times for hot inquiries.",
                 "priority": "High",
                 "impact": "High",
                 "effort": "Low"
             },
             {
-                "recommendation": "Build custom landing pages for the top 3 target verticals.",
+                "recommendation": f"Create targeted marketing and landing assets specifically for your top {business_type} segments.",
                 "priority": "Medium",
                 "impact": "High",
                 "effort": "Medium"
             },
             {
-                "recommendation": "Create a standardized Objection Handling script library.",
+                "recommendation": "Build a central playbook for common customer objections and pricing negotiations.",
                 "priority": "Medium",
                 "impact": "Medium",
                 "effort": "Low"
@@ -1406,7 +1555,7 @@ def get_insights_fallback(business_type, challenges, goals, company_name) -> dic
                 "effort": "Low"
             },
             {
-                "recommendation": "Establish developer APIs for customer data exports.",
+                "recommendation": f"Establish collaborative platforms for customer data and exports for {business_type}.",
                 "priority": "Low",
                 "impact": "Medium",
                 "effort": "High"
@@ -1414,11 +1563,11 @@ def get_insights_fallback(business_type, challenges, goals, company_name) -> dic
         ],
         "plan_30_day": [
             {
-                "action": "CRM Lead scoring integration",
-                "description": "Configure rules based on budget and role authority to filter inbound leads.",
+                "action": "CRM and process tracking setup",
+                "description": f"Configure rules based on budget and buyer authority to filter inbound {business_type} leads.",
                 "owner": "Marketing Operations Lead",
                 "success_metric": "Reduce lead review time by 50%",
-                "tools": ["Salesforce API", "Segment", "Zapier"],
+                "tools": ["CRM", "Zapier", "Spreadsheets"],
                 "kpi": "Under 5 minutes review time"
             },
             {
@@ -1426,7 +1575,7 @@ def get_insights_fallback(business_type, challenges, goals, company_name) -> dic
                 "description": "Standardize responses to pricing, implementation, and legacy objections.",
                 "owner": "Sales Enablement Director",
                 "success_metric": "Win rate improvement of 5%",
-                "tools": ["Google Docs", "Notion", "Loom"],
+                "tools": ["Central Docs", "Notion"],
                 "kpi": "100% rep certification rate"
             }
         ],
@@ -1435,8 +1584,8 @@ def get_insights_fallback(business_type, challenges, goals, company_name) -> dic
                 "action": "Targeted case study publication",
                 "description": "Write and design two success stories highlighting time-savings ROI.",
                 "owner": "Content Marketing Manager",
-                "success_metric": "Generate 40+ downloads from LinkedIn",
-                "tools": ["Canva", "HubSpot", "LinkedIn Ads Manager"],
+                "success_metric": "Generate 40+ downloads from marketing campaigns",
+                "tools": ["Design Tools", "Email Marketing", "Social Media"],
                 "kpi": "45 downloads"
             },
             {
@@ -1444,17 +1593,17 @@ def get_insights_fallback(business_type, challenges, goals, company_name) -> dic
                 "description": "Implement automated notifications for sales reps on inbound leads.",
                 "owner": "Sales Operations Lead",
                 "success_metric": "Average response time under 15 minutes",
-                "tools": ["Slack Integrations", "Calendly", "HubSpot SLA"],
+                "tools": ["Messaging Tools", "Calendly", "CRM Alerting"],
                 "kpi": "12 minutes response average"
             }
         ],
         "plan_90_day": [
             {
-                "action": "Product-Led self-serve sandbox launch",
-                "description": "Build a simplified playground version of our software for early trials.",
+                "action": f"Launch interactive sandbox/demo or sample kit for {business_type}",
+                "description": "Create a hands-on preview, interactive sandbox, or sample kit for prospects to experience the product quality directly.",
                 "owner": "Product Lead / CTO Office",
                 "success_metric": "Conversion from sandbox to demo booking > 15%",
-                "tools": ["Next.js Sandbox", "Auth0", "Stripe Pilot"],
+                "tools": ["Custom Portal", "Auth0", "Stripe"],
                 "kpi": "18% booking conversion"
             }
         ],
@@ -1491,11 +1640,11 @@ def get_insights_fallback(business_type, challenges, goals, company_name) -> dic
             }
         ],
         "priority_matrix": [
-            {"initiative": "CRM scoring setup", "urgency": "High", "impact": "High"},
-            {"initiative": "Rep onboarding academy", "urgency": "Medium", "impact": "High"},
+            {"initiative": "Process tracking setup", "urgency": "High", "impact": "High"},
+            {"initiative": "Rep onboarding guides", "urgency": "Medium", "impact": "High"},
             {"initiative": "Case study content push", "urgency": "High", "impact": "Medium"},
-            {"initiative": "API exports library", "urgency": "Low", "impact": "Medium"},
-            {"initiative": "Self-Serve sandbox portal", "urgency": "Medium", "impact": "High"}
+            {"initiative": "Collaborative resource library", "urgency": "Low", "impact": "Medium"},
+            {"initiative": "Interactive self-serve sandbox / demo", "urgency": "Medium", "impact": "High"}
         ]
     }
 

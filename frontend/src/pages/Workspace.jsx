@@ -302,9 +302,9 @@ export default function Workspace({ getCsrfToken }) {
                 <div className="h-80 w-full my-6">
                   <ResponsiveContainer width="100%" height="100%">
                     <RadarChart cx="50%" cy="50%" outerRadius="80%" data={chartRadarData}>
-                      <PolarGrid stroke="rgba(255,255,255,0.05)" />
-                      <PolarAngleAxis dataKey="subject" stroke="rgba(255,255,255,0.4)" fontSize={11} />
-                      <PolarRadiusAxis angle={30} domain={[0, 100]} stroke="rgba(255,255,255,0.2)" fontSize={9} />
+                      <PolarGrid stroke="rgba(15, 23, 42, 0.08)" />
+                      <PolarAngleAxis dataKey="subject" stroke="rgba(15, 23, 42, 0.5)" fontSize={11} />
+                      <PolarRadiusAxis angle={30} domain={[0, 100]} stroke="rgba(15, 23, 42, 0.3)" fontSize={9} />
                       {competitorKeys.slice(0, 3).map((compName, cIdx) => {
                         const radarColors = ['#6366f1', '#0ea5e9', '#10b981'];
                         return (
@@ -319,7 +319,16 @@ export default function Workspace({ getCsrfToken }) {
                         );
                       })}
                       <Legend verticalAlign="bottom" height={36} />
-                      <Tooltip contentStyle={{ background: '#0d1117', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '12px' }} />
+                      <Tooltip 
+                        contentStyle={{ 
+                          background: 'rgba(255, 255, 255, 0.95)', 
+                          border: '1px solid rgba(15, 23, 42, 0.08)', 
+                          borderRadius: '12px',
+                          boxShadow: '0 4px 12px rgba(15, 23, 42, 0.05)'
+                        }}
+                        itemStyle={{ color: '#0f172a' }}
+                        labelStyle={{ color: '#64748b', fontWeight: 'bold' }}
+                      />
                     </RadarChart>
                   </ResponsiveContainer>
                 </div>
@@ -474,14 +483,21 @@ export default function Workspace({ getCsrfToken }) {
                     <div className="h-64 w-full">
                       <ResponsiveContainer width="100%" height="100%">
                         <AreaChart data={simulationData.simulation_chart} margin={{ top: 10, right: 10, left: -10, bottom: 0 }}>
-                          <XAxis dataKey="month" stroke="rgba(255,255,255,0.3)" fontSize={11} />
-                          <YAxis stroke="rgba(255,255,255,0.3)" fontSize={11} tickFormatter={(v) => `$${v/1000}k`} />
-                          <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.03)" />
+                          <XAxis dataKey="month" stroke="rgba(15, 23, 42, 0.4)" fontSize={11} />
+                          <YAxis stroke="rgba(15, 23, 42, 0.4)" fontSize={11} tickFormatter={(v) => `$${v/1000}k`} />
+                          <CartesianGrid strokeDasharray="3 3" stroke="rgba(15, 23, 42, 0.06)" />
                           <Tooltip 
-                            contentStyle={{ background: '#0d1117', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '12px' }}
+                            contentStyle={{ 
+                              background: 'rgba(255, 255, 255, 0.95)', 
+                              border: '1px solid rgba(15, 23, 42, 0.08)', 
+                              borderRadius: '12px',
+                              boxShadow: '0 4px 12px rgba(15, 23, 42, 0.05)'
+                            }}
+                            itemStyle={{ color: '#0f172a' }}
+                            labelStyle={{ color: '#64748b', fontWeight: 'bold' }}
                           />
                           <Legend />
-                          <Area name="Baseline projection" type="monotone" dataKey="baseline" stroke="rgba(255,255,255,0.2)" fill="rgba(255,255,255,0.02)" />
+                          <Area name="Baseline projection" type="monotone" dataKey="baseline" stroke="rgba(15, 23, 42, 0.25)" fill="rgba(15, 23, 42, 0.02)" />
                           <Area name="Simulated Proj" type="monotone" dataKey="simulated" stroke="#6366f1" fill="rgba(99, 102, 241, 0.08)" />
                         </AreaChart>
                       </ResponsiveContainer>

@@ -238,12 +238,18 @@ export default function Dashboard() {
                     <stop offset="95%" stopColor="#6366f1" stopOpacity={0}/>
                   </linearGradient>
                 </defs>
-                <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.03)" />
-                <XAxis dataKey="name" stroke="rgba(255,255,255,0.3)" fontSize={11} />
-                <YAxis stroke="rgba(255,255,255,0.3)" fontSize={11} tickFormatter={(v) => `$${v/1000}k`} />
+                <CartesianGrid strokeDasharray="3 3" stroke="rgba(15, 23, 42, 0.06)" />
+                <XAxis dataKey="name" stroke="rgba(15, 23, 42, 0.4)" fontSize={11} />
+                <YAxis stroke="rgba(15, 23, 42, 0.4)" fontSize={11} tickFormatter={(v) => `$${v/1000}k`} />
                 <Tooltip 
-                  contentStyle={{ background: '#0d1117', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '12px' }}
-                  labelStyle={{ color: '#fff', fontWeight: 'bold' }}
+                  contentStyle={{ 
+                    background: 'rgba(255, 255, 255, 0.95)', 
+                    border: '1px solid rgba(15, 23, 42, 0.08)', 
+                    borderRadius: '12px',
+                    boxShadow: '0 4px 12px rgba(15, 23, 42, 0.05)'
+                  }}
+                  itemStyle={{ color: '#0f172a' }}
+                  labelStyle={{ color: '#64748b', fontWeight: 'bold' }}
                 />
                 <Area type="monotone" dataKey="Revenue" stroke="#6366f1" strokeWidth={2} fillOpacity={1} fill="url(#colorRevenue)" />
               </AreaChart>
@@ -277,7 +283,15 @@ export default function Dashboard() {
                     ))}
                   </Pie>
                   <Tooltip 
-                    contentStyle={{ background: '#0d1117', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '12px', fontSize: '11px' }}
+                    contentStyle={{ 
+                      background: 'rgba(255, 255, 255, 0.95)', 
+                      border: '1px solid rgba(15, 23, 42, 0.08)', 
+                      borderRadius: '12px', 
+                      boxShadow: '0 4px 12px rgba(15, 23, 42, 0.05)',
+                      fontSize: '11px' 
+                    }}
+                    itemStyle={{ color: '#0f172a' }}
+                    labelStyle={{ color: '#64748b', fontWeight: 'bold' }}
                   />
                 </PieChart>
               </ResponsiveContainer>
@@ -319,11 +333,18 @@ export default function Dashboard() {
           <div className="h-64 w-full">
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={campaignClickData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
-                <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.03)" />
-                <XAxis dataKey="name" stroke="rgba(255,255,255,0.3)" fontSize={11} />
-                <YAxis stroke="rgba(255,255,255,0.3)" fontSize={11} />
+                <CartesianGrid strokeDasharray="3 3" stroke="rgba(15, 23, 42, 0.06)" />
+                <XAxis dataKey="name" stroke="rgba(15, 23, 42, 0.4)" fontSize={11} />
+                <YAxis stroke="rgba(15, 23, 42, 0.4)" fontSize={11} />
                 <Tooltip 
-                  contentStyle={{ background: '#0d1117', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '12px' }}
+                  contentStyle={{ 
+                    background: 'rgba(255, 255, 255, 0.95)', 
+                    border: '1px solid rgba(15, 23, 42, 0.08)', 
+                    borderRadius: '12px',
+                    boxShadow: '0 4px 12px rgba(15, 23, 42, 0.05)'
+                  }}
+                  itemStyle={{ color: '#0f172a' }}
+                  labelStyle={{ color: '#64748b', fontWeight: 'bold' }}
                 />
                 <Bar dataKey="Clicks" fill="#0ea5e9" radius={[4, 4, 0, 0]} />
               </BarChart>

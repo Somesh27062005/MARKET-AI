@@ -50,6 +50,7 @@ def market_node(state: MarketState) -> dict:
         f"Time Horizon: {horizon}\n"
         f"Known Competitors: {known or 'Auto-detect top 5 competitors'}\n\n"
         f"Conduct a comprehensive market research and competitor analysis for {co_name}. All outputs must reference {co_name} specifically and be realistic for their industry and business size.\n"
+        f"Keep descriptions and context fields concise (1-2 sentences or 15-20 words max per bullet) to stay within token budgets.\n"
         f"1. Estimate the current and projected market size (Realistic USD values), CAGR, and currency.\n"
         f"2. Write a detailed executive_summary highlighting trends and opportunities.\n"
         f"3. Identify 5 growth_drivers and 5 market_risks relevant to {co_name}.\n"
@@ -66,7 +67,7 @@ def market_node(state: MarketState) -> dict:
     )
 
     sys_prompt = f"{co_prefix}You are a Senior Market Intelligence Analyst conducting analysis for {co_name}. Return JSON only."
-    result = invoke_structured(sys_prompt, prompt, schema_hint=MARKET_SCHEMA, retries=2, fast=False, max_tokens=3000)
+    result = invoke_structured(sys_prompt, prompt, schema_hint=MARKET_SCHEMA, retries=2, fast=False, max_tokens=3500)
     return {"result": result}
 
 

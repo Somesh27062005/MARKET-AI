@@ -71,6 +71,6 @@ resilient-pascal/
 
 ## 📋 Test Cases
 
-1. **Campaign Generation:** Product: "AI email marketing platform" → Target: "Marketing managers, e-commerce" → Platform: "LinkedIn, Instagram"
+1. **Campaign Generation:** Product: "AI email marketing platform" → Target: "Marketing managers, e-commerce" → Platform: "LinkedIn, Facebook"
 2. **Sales Pitch:** Product: "Cloud inventory management" → Customer: "Fortune 500 retail, Operations Director"
 3. **Lead Scoring:** Lead: "Sarah Johnson" → Budget: "$150,000" → Need: "Customer retention" → Urgency: "High priority, Q3 deadline"

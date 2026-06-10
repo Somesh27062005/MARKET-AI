@@ -318,6 +318,7 @@ def _pdf_campaign(story, d, W):
                 f"Week {item.get('week', '')}",
                 item.get("theme", ""),
                 "\n".join(f"- {t}" for t in item.get("tasks", []))
+            ])
         story.append(_table(rows, [W * 0.15, W * 0.35, W * 0.50]))
 
     social_posts = d.get("social_media_posts", [])
@@ -327,11 +328,8 @@ def _pdf_campaign(story, d, W):
         for post in social_posts[:6]:
             platform = post.get("platform", "Social Media")
             copy = post.get("copy", "")
-            media = post.get("media_suggestion", "")
             story.append(Paragraph(f"<b>Platform:</b> {platform}", body_style))
             story.append(Paragraph(f"<b>Content:</b> {copy}", body_style))
-            if media:
-                story.append(Paragraph(f"<b>Media Suggestion:</b> {media}", bullet_style))
             story.append(Spacer(1, 5))
 
 def _pdf_pitch(story, d, W):
@@ -808,11 +806,8 @@ def _docx_campaign(doc, d):
         for post in social_posts[:6]:
             platform = post.get("platform", "Social Media")
             copy = post.get("copy", "")
-            media = post.get("media_suggestion", "")
             add_styled_paragraph(doc, f"Platform: {platform}", size_pt=10, color_rgb=RGBColor(59, 130, 246), bold=True, space_before=4)
-            add_styled_paragraph(doc, copy, size_pt=9.5)
-            if media:
-                add_styled_paragraph(doc, f"Media Recommendation: {media}", size_pt=9.5, italic=True, space_after=8)
+            add_styled_paragraph(doc, copy, size_pt=9.5, space_after=8)
 
 def _docx_pitch(doc, d):
     add_styled_paragraph(doc, "Sales Pitch Handbook & Objection Scripts", size_pt=16, color_rgb=RGBColor(31, 41, 55), bold=True, space_before=12, space_after=8)

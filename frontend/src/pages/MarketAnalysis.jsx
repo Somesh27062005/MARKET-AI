@@ -178,11 +178,11 @@ export default function MarketAnalysis({ getCsrfToken }) {
               type="button"
               onClick={handleSuggestInputs}
               disabled={suggesting}
-              className="text-[10px] font-bold bg-indigo-600/10 hover:bg-indigo-600/20 text-indigo-400 px-2.5 py-1 rounded-lg border border-indigo-500/10 flex items-center space-x-1 transition-all disabled:opacity-40"
+              className="text-[10px] font-bold bg-indigo-600 hover:bg-indigo-700 text-white px-2.5 py-1 rounded-lg border border-indigo-500/25 flex items-center space-x-1 transition-all disabled:opacity-40 shadow-sm"
               title="Auto-fill form inputs based on your company context & uploaded knowledge base documents"
             >
               {suggesting ? (
-                <div className="w-3.5 h-3.5 border-2 border-indigo-400 border-t-transparent rounded-full animate-spin"></div>
+                <div className="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
               ) : (
                 <>
                   <Sparkles className="w-3 h-3" />
@@ -506,11 +506,18 @@ export default function MarketAnalysis({ getCsrfToken }) {
                               <stop offset="95%" stopColor="#0ea5e9" stopOpacity={0}/>
                             </linearGradient>
                           </defs>
-                          <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.03)" />
-                          <XAxis dataKey="name" stroke="rgba(255,255,255,0.3)" fontSize={11} />
-                          <YAxis stroke="rgba(255,255,255,0.3)" fontSize={11} />
+                          <CartesianGrid strokeDasharray="3 3" stroke="rgba(15, 23, 42, 0.06)" />
+                          <XAxis dataKey="name" stroke="rgba(15, 23, 42, 0.4)" fontSize={11} />
+                          <YAxis stroke="rgba(15, 23, 42, 0.4)" fontSize={11} />
                           <Tooltip 
-                            contentStyle={{ background: '#0d1117', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '12px' }}
+                            contentStyle={{ 
+                              background: 'rgba(255, 255, 255, 0.95)', 
+                              border: '1px solid rgba(15, 23, 42, 0.08)', 
+                              borderRadius: '12px',
+                              boxShadow: '0 4px 12px rgba(15, 23, 42, 0.05)'
+                            }}
+                            itemStyle={{ color: '#0f172a' }}
+                            labelStyle={{ color: '#64748b', fontWeight: 'bold' }}
                           />
                           <Area type="monotone" dataKey="Size" stroke="#0ea5e9" strokeWidth={2} fillOpacity={1} fill="url(#colorSize)" />
                         </AreaChart>

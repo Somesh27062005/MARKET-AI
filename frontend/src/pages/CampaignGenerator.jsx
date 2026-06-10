@@ -18,9 +18,10 @@ import GlassCard from '../components/GlassCard.jsx';
 import ChatAssistant from '../components/ChatAssistant.jsx';
 
 export default function CampaignGenerator({ getCsrfToken }) {
+  const ALL_PLATFORMS = ['LinkedIn', 'Twitter/X', 'Facebook', 'WhatsApp'];
   const [product, setProduct] = useState('');
   const [audience, setAudience] = useState('');
-  const [platform, setPlatform] = useState('');
+  const [platform, setPlatform] = useState('LinkedIn, Twitter/X, Facebook, WhatsApp');
   const [goals, setGoals] = useState('');
   const [budget, setBudget] = useState('');
   const [loading, setLoading] = useState(false);
@@ -98,17 +99,18 @@ export default function CampaignGenerator({ getCsrfToken }) {
           const tweetUrl = `https://twitter.com/intent/tweet?text=${encodeURIComponent(copy)}`;
           window.open(tweetUrl, '_blank');
           showToast("Twitter compose opened! Post copy synced to clipboard as backup.");
+        } else if (cleanPlatform.includes('whatsapp')) {
+          // WhatsApp supports url pre-fill cleanly
+          const waUrl = `https://web.whatsapp.com/send?text=${encodeURIComponent(copy)}`;
+          window.open(waUrl, '_blank');
+          showToast("WhatsApp Web opened! Text pre-filled.");
         } else if (cleanPlatform.includes('linkedin')) {
           // Use clipboard copy + new tab redirect to LinkedIn feed composer to bypass URL parsing truncation bugs
           showToast("Full post copied! Opening LinkedIn feed composer (press Ctrl+V to paste)...", "success");
-          setTimeout(() => {
-            window.open('https://www.linkedin.com/feed/?shareActive=true', '_blank');
-          }, 1000);
-        } else if (cleanPlatform.includes('instagram')) {
-          showToast("Caption copied! Opening Instagram to share (press Ctrl+V to paste)...", "success");
-          setTimeout(() => {
-            window.open('https://www.instagram.com/', '_blank');
-          }, 1000);
+          window.open('https://www.linkedin.com/feed/?shareActive=true', '_blank');
+        } else if (cleanPlatform.includes('facebook')) {
+          showToast("Full post copied! Opening Facebook (press Ctrl+V to paste)...", "success");
+          window.open('https://www.facebook.com/', '_blank');
         } else {
           showToast("Post content copied to clipboard!");
         }
@@ -133,7 +135,8 @@ export default function CampaignGenerator({ getCsrfToken }) {
     let normPlatform = post.platform || "LinkedIn";
     if (normPlatform.toLowerCase().includes("linkedin")) normPlatform = "LinkedIn";
     else if (normPlatform.toLowerCase().includes("twitter") || normPlatform.toLowerCase().includes("x")) normPlatform = "Twitter/X";
-    else if (normPlatform.toLowerCase().includes("instagram")) normPlatform = "Instagram";
+    else if (normPlatform.toLowerCase().includes("facebook")) normPlatform = "Facebook";
+    else if (normPlatform.toLowerCase().includes("whatsapp")) normPlatform = "WhatsApp";
     await executePostPublish(idx, normPlatform, post.copy);
   };
 
@@ -155,7 +158,25 @@ export default function CampaignGenerator({ getCsrfToken }) {
           const s = data.suggestions;
           setProduct(s.product || '');
           setAudience(s.audience || '');
-          setPlatform(s.platform || '');
+          
+          let suggestedPlat = s.platform || '';
+          if (suggestedPlat) {
+            const parts = suggestedPlat.split(',').map(p => p.trim());
+            const filtered = parts.filter(p => {
+              return ALL_PLATFORMS.some(valid => valid.toLowerCase() === p.toLowerCase() || p.toLowerCase().includes(valid.toLowerCase()));
+            }).map(p => {
+              return ALL_PLATFORMS.find(valid => valid.toLowerCase() === p.toLowerCase() || p.toLowerCase().includes(valid.toLowerCase()));
+            });
+            const uniqueFiltered = [...new Set(filtered)];
+            if (uniqueFiltered.length > 0) {
+              setPlatform(uniqueFiltered.join(', '));
+            } else {
+              setPlatform('LinkedIn, Twitter/X, Facebook, WhatsApp');
+            }
+          } else {
+            setPlatform('LinkedIn, Twitter/X, Facebook, WhatsApp');
+          }
+          
           setGoals(s.goals || '');
           setBudget(s.budget || '');
         } else {
@@ -259,11 +280,11 @@ export default function CampaignGenerator({ getCsrfToken }) {
               type="button"
               onClick={handleSuggestInputs}
               disabled={suggesting}
-              className="text-[10px] font-bold bg-indigo-600/10 hover:bg-indigo-600/20 text-indigo-400 px-2.5 py-1 rounded-lg border border-indigo-500/10 flex items-center space-x-1 transition-all disabled:opacity-40"
+              className="text-[10px] font-bold bg-indigo-600 hover:bg-indigo-700 text-white px-2.5 py-1 rounded-lg border border-indigo-500/25 flex items-center space-x-1 transition-all disabled:opacity-40 shadow-sm"
               title="Auto-fill form inputs based on your company context & uploaded knowledge base documents"
             >
               {suggesting ? (
-                <div className="w-3.5 h-3.5 border-2 border-indigo-400 border-t-transparent rounded-full animate-spin"></div>
+                <div className="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
               ) : (
                 <>
                   <Sparkles className="w-3 h-3" />
@@ -297,17 +318,34 @@ export default function CampaignGenerator({ getCsrfToken }) {
             </div>
 
             <div>
-              <label className="block text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">Primary Ad Platform</label>
-              <select
-                value={platform}
-                onChange={(e) => setPlatform(e.target.value)}
-                className="w-full glass-input"
-              >
-                <option value="LinkedIn">LinkedIn Sponsored Content</option>
-                <option value="Instagram">Instagram Stories & Feed</option>
-                <option value="Google Search">Google Search Ads</option>
-                <option value="Multi-platform">Multi-platform Mix</option>
-              </select>
+              <label className="block text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">Campaign Platforms</label>
+              <div className="grid grid-cols-2 gap-2 bg-white/2 p-3 rounded-xl border border-white/5">
+                {ALL_PLATFORMS.map((plat) => {
+                  const selected = platform.split(',').map(p => p.trim()).filter(Boolean);
+                  const isChecked = selected.includes(plat);
+                  return (
+                    <label key={plat} className="flex items-center space-x-2 text-xs text-gray-300 cursor-pointer select-none py-1 hover:text-white transition-all">
+                      <input
+                        type="checkbox"
+                        checked={isChecked}
+                        onChange={() => {
+                          if (isChecked) {
+                            if (selected.length > 1) {
+                              setPlatform(selected.filter(p => p !== plat).join(', '));
+                            } else {
+                              showToast("Please select at least one platform", "error");
+                            }
+                          } else {
+                            setPlatform([...selected, plat].join(', '));
+                          }
+                        }}
+                        className="rounded border-white/10 bg-slate-900 text-indigo-600 focus:ring-0 focus:ring-offset-0 w-3.5 h-3.5"
+                      />
+                      <span>{plat}</span>
+                    </label>
+                  );
+                })}
+              </div>
             </div>
 
             <div>
@@ -622,85 +660,103 @@ export default function CampaignGenerator({ getCsrfToken }) {
                           <p className="text-xs text-gray-400 mt-0.5">Custom posts generated by the AI matching your campaign goals.</p>
                         </div>
                         <span className="text-xs font-semibold px-2.5 py-1 rounded-lg bg-indigo-600/20 text-indigo-400 border border-indigo-500/10">
-                          {Array.isArray(result.social_media_posts) ? result.social_media_posts.length : 0} Posts Ready
+                          {(() => {
+                            const selectedPlats = platform.split(',').map(p => p.trim().toLowerCase()).filter(Boolean);
+                            return Array.isArray(result.social_media_posts)
+                              ? result.social_media_posts.filter(post => {
+                                  const postPlatform = (post.platform || "").toLowerCase();
+                                  return selectedPlats.some(p => postPlatform.includes(p) || p.includes(postPlatform));
+                                }).length
+                              : 0;
+                          })()} Posts Ready
                         </span>
                       </div>
 
                       <div className="grid grid-cols-1 gap-6">
                         {Array.isArray(result.social_media_posts) && result.social_media_posts.length > 0 ? (
-                          result.social_media_posts.map((post, idx) => {
-                            const postStatus = postingStates[idx] || 'idle';
-                            const isLinkedIn = post.platform?.toLowerCase().includes('linkedin');
-                            const isTwitter = post.platform?.toLowerCase().includes('twitter') || post.platform?.toLowerCase().includes('x');
-                            const isInstagram = post.platform?.toLowerCase().includes('instagram');
+                          (() => {
+                            const selected = platform.split(',').map(p => p.trim().toLowerCase()).filter(Boolean);
+                            const displayedPosts = result.social_media_posts.map((post, originalIdx) => {
+                              const postPlatform = (post.platform || "").toLowerCase();
+                              const isSelected = selected.some(p => postPlatform.includes(p) || p.includes(postPlatform));
+                              if (!isSelected) return null;
 
-                            let platformBadge = "bg-white/5 text-gray-300";
-                            if (isLinkedIn) platformBadge = "bg-blue-600/20 text-blue-400 border border-blue-500/20";
-                            else if (isTwitter) platformBadge = "bg-slate-950/40 text-slate-200 border border-slate-700/30";
-                            else if (isInstagram) platformBadge = "bg-pink-600/20 text-pink-400 border border-pink-500/20";
+                              const postStatus = postingStates[originalIdx] || 'idle';
+                              const isLinkedIn = post.platform?.toLowerCase().includes('linkedin');
+                              const isTwitter = post.platform?.toLowerCase().includes('twitter') || post.platform?.toLowerCase().includes('x');
+                              const isFacebook = post.platform?.toLowerCase().includes('facebook');
+                              const isWhatsApp = post.platform?.toLowerCase().includes('whatsapp');
+                              const isGoogle = post.platform?.toLowerCase().includes('google') || post.platform?.toLowerCase().includes('search');
 
-                            return (
-                              <div key={idx} className="bg-white/2 p-5 rounded-2xl border border-white/5 flex flex-col justify-between space-y-4 hover:border-white/10 transition-all">
-                                <div className="space-y-3">
-                                  <div className="flex items-center justify-between">
-                                    <div className="flex items-center space-x-2">
-                                      <span className={`text-[10px] font-bold uppercase tracking-wider px-2.5 py-1 rounded-lg ${platformBadge}`}>
-                                        {post.platform || 'Social Media'}
-                                      </span>
-                                    </div>
-                                    <div className="flex items-center text-xs text-gray-400 font-semibold">
-                                      <span>Generated Campaign Asset</span>
-                                    </div>
-                                  </div>
+                              let platformBadge = "bg-white/5 text-gray-300";
+                              if (isLinkedIn) platformBadge = "bg-blue-600/20 text-blue-400 border border-blue-500/20";
+                              else if (isTwitter) platformBadge = "bg-slate-950/40 text-slate-200 border border-slate-700/30";
+                              else if (isFacebook) platformBadge = "bg-indigo-600/20 text-indigo-400 border border-indigo-500/20";
+                              else if (isWhatsApp) platformBadge = "bg-emerald-600/20 text-emerald-400 border border-emerald-500/20";
+                              else if (isGoogle) platformBadge = "bg-amber-600/20 text-amber-400 border border-amber-500/20";
 
-                                  <div className="text-sm text-gray-200 leading-relaxed whitespace-pre-wrap bg-white/2 p-4 rounded-xl border border-white/5 font-normal">
-                                    {post.copy}
-                                  </div>
-
-                                  {post.media_suggestion && (
-                                    <div className="bg-indigo-600/5 border border-indigo-500/10 rounded-xl p-3.5 flex items-start space-x-2.5">
-                                      <Sparkles className="w-4 h-4 text-indigo-400 shrink-0 mt-0.5" />
-                                      <div>
-                                        <h5 className="text-xs font-bold text-indigo-300 uppercase tracking-wider">Media Suggestion</h5>
-                                        <p className="text-xs text-gray-300 mt-0.5 leading-relaxed">{post.media_suggestion}</p>
+                              return (
+                                <div key={originalIdx} className="bg-white/2 p-5 rounded-2xl border border-white/5 flex flex-col justify-between space-y-4 hover:border-white/10 transition-all">
+                                  <div className="space-y-3">
+                                    <div className="flex items-center justify-between">
+                                      <div className="flex items-center space-x-2">
+                                        <span className={`text-[10px] font-bold uppercase tracking-wider px-2.5 py-1 rounded-lg ${platformBadge}`}>
+                                          {post.platform || 'Social Media'}
+                                        </span>
+                                      </div>
+                                      <div className="flex items-center text-xs text-gray-400 font-semibold">
+                                        <span>Generated Campaign Asset</span>
                                       </div>
                                     </div>
-                                  )}
-                                </div>
 
-                                <div className="pt-4 border-t border-white/5 flex justify-end">
-                                  <button
-                                    onClick={() => handlePublishPost(idx, post)}
-                                    disabled={postStatus === 'posting'}
-                                    className={`px-5 py-2 rounded-xl text-xs font-bold transition-all flex items-center space-x-2 border shadow-lg ${
-                                      postStatus === 'success'
-                                        ? 'bg-emerald-600/20 text-emerald-400 border-emerald-500/20 shadow-emerald-500/5 hover:bg-emerald-600/30'
-                                        : postStatus === 'posting'
-                                        ? 'bg-indigo-600/20 text-indigo-400 border-indigo-500/10 shadow-indigo-500/5'
-                                        : 'bg-indigo-600 hover:bg-indigo-500 text-white border-indigo-500/35 hover:shadow-indigo-500/10'
-                                    }`}
-                                  >
-                                    {postStatus === 'posting' ? (
-                                      <>
-                                        <div className="w-3.5 h-3.5 border-2 border-indigo-400 border-t-transparent rounded-full animate-spin shrink-0"></div>
-                                        <span>Opening...</span>
-                                      </>
-                                    ) : postStatus === 'success' ? (
-                                      <>
-                                        <CheckCircle className="w-4 h-4 shrink-0 text-emerald-400" />
-                                        <span>Copied & Opened!</span>
-                                      </>
-                                    ) : (
-                                      <>
-                                        <Share2 className="w-3.5 h-3.5 shrink-0" />
-                                        <span>Publish Post</span>
-                                      </>
-                                    )}
-                                  </button>
+                                    <div className="text-sm text-gray-200 leading-relaxed whitespace-pre-wrap bg-white/2 p-4 rounded-xl border border-white/5 font-normal">
+                                      {post.copy}
+                                    </div>
+                                  </div>
+
+                                  <div className="pt-4 border-t border-white/5 flex justify-end">
+                                    <button
+                                      onClick={() => handlePublishPost(originalIdx, post)}
+                                      disabled={postStatus === 'posting'}
+                                      className={`px-5 py-2 rounded-xl text-xs font-bold transition-all flex items-center space-x-2 border shadow-lg ${
+                                        postStatus === 'success'
+                                          ? 'bg-emerald-600/20 text-emerald-400 border-emerald-500/20 shadow-emerald-500/5 hover:bg-emerald-600/30'
+                                          : postStatus === 'posting'
+                                          ? 'bg-indigo-600/20 text-indigo-400 border-indigo-500/10 shadow-indigo-500/5'
+                                          : 'bg-indigo-600 hover:bg-indigo-500 text-white border-indigo-500/35 hover:shadow-indigo-500/10'
+                                      }`}
+                                    >
+                                      {postStatus === 'posting' ? (
+                                        <>
+                                          <div className="w-3.5 h-3.5 border-2 border-indigo-400 border-t-transparent rounded-full animate-spin shrink-0"></div>
+                                          <span>Opening...</span>
+                                        </>
+                                      ) : postStatus === 'success' ? (
+                                        <>
+                                          <CheckCircle className="w-4 h-4 shrink-0 text-emerald-400" />
+                                          <span>Copied & Opened!</span>
+                                        </>
+                                      ) : (
+                                        <>
+                                          <Share2 className="w-3.5 h-3.5 shrink-0" />
+                                          <span>Publish Post</span>
+                                        </>
+                                      )}
+                                    </button>
+                                  </div>
                                 </div>
-                              </div>
-                            );
-                          })
+                              );
+                            }).filter(Boolean);
+
+                            if (displayedPosts.length === 0) {
+                              return (
+                                <div className="text-center py-8 text-xs text-gray-500">
+                                  No social media posts generated for the selected platforms.
+                                </div>
+                              );
+                            }
+                            return displayedPosts;
+                          })()
                         ) : (
                           <div className="text-center py-8 text-xs text-gray-500">
                             No social media posts generated for this campaign.
@@ -745,12 +801,20 @@ export default function CampaignGenerator({ getCsrfToken }) {
 
       {/* Toast Notification Overlay */}
       {toast && (
-        <div className="fixed bottom-6 right-6 z-50 animate-fade-in bg-slate-950/90 border border-emerald-500/35 text-white px-5 py-3.5 rounded-2xl shadow-2xl backdrop-blur-md flex items-center space-x-3.5 min-w-[320px] transition-all">
-          <div className="w-9 h-9 rounded-xl bg-emerald-600/20 border border-emerald-500/20 flex items-center justify-center text-emerald-400 shrink-0">
-            <CheckCircle className="w-5 h-5 animate-pulse" />
+        <div className={`fixed bottom-6 right-6 z-50 animate-fade-in bg-slate-950/90 border text-white px-5 py-3.5 rounded-2xl shadow-2xl backdrop-blur-md flex items-center space-x-3.5 min-w-[320px] transition-all ${
+          toast.type === 'error' ? 'border-rose-500/35 shadow-rose-500/5' : 'border-emerald-500/35 shadow-emerald-500/5'
+        }`}>
+          <div className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 ${
+            toast.type === 'error' ? 'bg-rose-600/20 border border-rose-500/20 text-rose-400' : 'bg-emerald-600/20 border border-emerald-500/20 text-emerald-400'
+          }`}>
+            {toast.type === 'error' ? <HelpCircle className="w-5 h-5 animate-pulse" /> : <CheckCircle className="w-5 h-5 animate-pulse" />}
           </div>
           <div>
-            <p className="text-xs font-bold uppercase tracking-widest text-emerald-400">Social Publish</p>
+            <p className={`text-[10px] font-bold uppercase tracking-widest ${
+              toast.type === 'error' ? 'text-rose-400' : 'text-emerald-400'
+            }`}>
+              {toast.type === 'error' ? 'Notification' : 'Social Publish'}
+            </p>
             <p className="text-xs font-medium text-gray-300 mt-0.5">{toast.message}</p>
           </div>
         </div>

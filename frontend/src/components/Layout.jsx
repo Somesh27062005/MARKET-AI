@@ -88,8 +88,8 @@ export default function Layout({ children, user, onLogout }) {
   return (
     <div className="flex min-h-screen bg-surface-900 text-gray-200 overflow-hidden font-sans relative">
       {/* Decorative ambient mesh gradients */}
-      <div className="absolute top-[-20%] left-[-10%] w-[60%] h-[60%] rounded-full bg-indigo-500/5 blur-[120px] pointer-events-none animate-float"></div>
-      <div className="absolute bottom-[-20%] right-[-10%] w-[60%] h-[60%] rounded-full bg-cyan-500/5 blur-[120px] pointer-events-none animate-float-delayed"></div>
+      <div className="absolute top-[-20%] left-[-10%] w-[60%] h-[60%] rounded-full bg-indigo-500/5 blur-[120px] pointer-events-none animate-float" style={{ willChange: 'transform' }}></div>
+      <div className="absolute bottom-[-20%] right-[-10%] w-[60%] h-[60%] rounded-full bg-cyan-500/5 blur-[120px] pointer-events-none animate-float-delayed" style={{ willChange: 'transform' }}></div>
 
       {/* Sidebar - Unique Floating Collapsible Dock */}
       <aside className="fixed left-5 top-5 bottom-5 w-20 hover:w-64 bg-surface-800/80 border border-white/10 flex flex-col z-30 backdrop-blur-xl rounded-[2rem] shadow-2xl transition-all duration-300 ease-out group">

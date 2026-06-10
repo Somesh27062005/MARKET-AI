@@ -57,13 +57,13 @@ def insights_node(state: InsightsState) -> dict:
         f"8. Make 6 strategic_recommendations (recommendation, priority High/Medium/Low, impact, effort).\n"
         f"9. Map 5 initiatives on a priority_matrix (initiative, urgency, impact, matrix_explanation).\n"
         f"10. Set 5 KPI targets using actual metrics from context if available.\n"
-        f"11. Create a 30/60/90-day implementation roadmap (using arrays plan_30_day, plan_60_day, and plan_90_day). Each item must have: action (short title), description (2-3 sentences explaining what to do and why), owner, success_metric, tools (list of 2-3 specific tools, software, or frameworks to use), and kpi (measurable target value).\n"
+        f"11. Create a 30/60/90-day implementation roadmap (using arrays plan_30_day, plan_60_day, and plan_90_day). Each item must have: action (short title), description (2-3 sentences explaining what to do and why), owner, success_metric, tools (list of 2-3 specific tools, assets, resources, or systems to use), and kpi (measurable target value).\n"
         f"12. Assess 3 competitive_risks (risk, competitor name, likelihood) and 3 operational_risks (risk, probability, impact, mitigation).\n"
         f"{grounding}"
     )
 
     sys_prompt = f"{co_prefix}You are a Senior Strategy Consultant for {co_name}. Return JSON only."
-    result = invoke_structured(sys_prompt, prompt, schema_hint=INSIGHTS_SCHEMA, retries=2, fast=False, max_tokens=2500)
+    result = invoke_structured(sys_prompt, prompt, schema_hint=INSIGHTS_SCHEMA, retries=2, fast=False, max_tokens=1800)
     return {"result": result}
 
 def merge_node(state: InsightsState) -> dict:

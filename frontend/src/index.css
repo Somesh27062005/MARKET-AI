@@ -306,14 +306,20 @@ button.chat-suggestion-chip:hover {
 /* Infinite Scrolling Marquee for Stock Ticker */
 @keyframes marquee {
   0% {
-    transform: translateX(0);
+    transform: translate3d(0, 0, 0);
   }
   100% {
-    transform: translateX(-50%);
+    transform: translate3d(-50%, 0, 0);
   }
 }
 .animate-marquee {
   display: inline-flex;
   animation: marquee 45s linear infinite;
+}
+
+/* Recharts styling fixes for Light theme and Tailwind Preflight conflict */
+.recharts-wrapper * {
+  border-style: none !important;
+  outline: none !important;
 }
 

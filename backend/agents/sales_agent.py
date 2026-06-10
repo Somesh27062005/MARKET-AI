@@ -65,7 +65,7 @@ def pitch_node(state: SalesState) -> dict:
     )
 
     sys_prompt = f"{co_prefix}You are a Senior Sales Strategist for {co_name}. Return JSON only."
-    result = invoke_structured(sys_prompt, prompt, schema_hint=PITCH_SCHEMA, retries=2, fast=False, max_tokens=2500)
+    result = invoke_structured(sys_prompt, prompt, schema_hint=PITCH_SCHEMA, retries=2, fast=False, max_tokens=1800)
     return {"result": result}
 
 def email_merge_node(state: SalesState) -> dict:
