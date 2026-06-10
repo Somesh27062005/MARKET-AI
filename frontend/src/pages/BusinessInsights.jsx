@@ -388,11 +388,14 @@ export default function BusinessInsights({ getCsrfToken }) {
                         <h3 className="text-sm font-bold text-white mb-3">New Revenue Channels</h3>
                         <div className="space-y-2">
                           {(Array.isArray(result.revenue_opportunities) ? result.revenue_opportunities : []).map((opp, idx) => (
-                            <div key={idx} className="bg-white/2 p-3 rounded-xl border border-white/5 text-xs">
+                            <div key={idx} className="bg-white/2 p-3 rounded-xl border border-white/5 text-xs space-y-1.5">
                               <div className="flex justify-between font-bold text-white">
                                 <span>{opp.source}</span>
-                                <span>{opp.potential}</span>
+                                <span className="text-indigo-400 whitespace-nowrap ml-2">{opp.potential}</span>
                               </div>
+                              {opp.description && (
+                                <p className="text-gray-400 text-[11px] leading-normal">{opp.description}</p>
+                              )}
                               <span className="text-[10px] text-gray-500 block mt-1">Timeline: {opp.timeline || 'Q3'}</span>
                             </div>
                           ))}
@@ -420,16 +423,30 @@ export default function BusinessInsights({ getCsrfToken }) {
                       <h3 className="text-base font-bold text-white mb-3">Strategic Growth Opportunities</h3>
                       <div className="space-y-3">
                         {(Array.isArray(result.growth_opportunities) ? result.growth_opportunities : []).map((opp, idx) => (
-                          <div key={idx} className="bg-white/2 p-3.5 rounded-xl border border-white/5 text-xs flex justify-between items-center gap-4">
-                            <div>
+                          <div key={idx} className="bg-white/2 p-3.5 rounded-xl border border-white/5 text-xs flex flex-col md:flex-row md:items-center justify-between gap-4">
+                            <div className="space-y-1">
                               <h4 className="font-bold text-white">
                                 {typeof opp === 'object' && opp !== null ? (opp.title || opp.opportunity || '') : opp}
                               </h4>
-                              {opp.revenue_impact && <p className="text-gray-400 mt-1">{opp.revenue_impact}</p>}
+                              {opp.description && (
+                                <p className="text-gray-400 text-[11px] leading-normal">{opp.description}</p>
+                              )}
+                              <div className="flex flex-wrap gap-2 mt-1">
+                                {opp.revenue_impact && (
+                                  <span className="text-[10px] bg-emerald-500/10 text-emerald-400 px-2 py-0.5 rounded font-medium">
+                                    Impact: {opp.revenue_impact}
+                                  </span>
+                                )}
+                                {opp.effort && (
+                                  <span className="text-[10px] bg-blue-500/10 text-blue-400 px-2 py-0.5 rounded font-medium">
+                                    Effort: {opp.effort}
+                                  </span>
+                                )}
+                              </div>
                             </div>
                             {opp.score && (
-                              <span className="text-[10px] font-bold bg-indigo-500/10 text-indigo-400 px-2.5 py-1 rounded-lg">
-                                Impact: {opp.score}/10
+                              <span className="text-[10px] font-bold bg-indigo-500/10 text-indigo-400 px-2.5 py-1 rounded-lg whitespace-nowrap self-start md:self-center">
+                                Score: {opp.score}
                               </span>
                             )}
                           </div>

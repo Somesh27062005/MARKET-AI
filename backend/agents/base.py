@@ -467,8 +467,8 @@ INSIGHTS_SCHEMA = """{
   "executive_summary": "string",
   "current_challenges": [{"challenge": "string", "severity": "High|Medium|Low", "impact": "string"}],
   "root_cause_analysis": [{"problem": "string", "root_cause": "string", "evidence": "string"}],
-  "growth_opportunities": [{"title": "string", "score": 0, "effort": "string", "revenue_impact": "string"}],
-  "revenue_opportunities": [{"source": "string", "potential": "string", "timeline": "string"}],
+  "growth_opportunities": [{"title": "string", "score": 0, "effort": "string", "revenue_impact": "string", "description": "string"}],
+  "revenue_opportunities": [{"source": "string", "potential": "string", "timeline": "string", "description": "string"}],
   "cost_optimization": [{"area": "string", "potential_savings": "string", "action": "string"}],
   "strategic_recommendations": [{"recommendation": "string", "priority": "High|Medium|Low", "impact": "string", "effort": "string"}],
   "competitive_risks": [{"risk": "string", "competitor": "string", "likelihood": "string"}],
@@ -1335,53 +1335,62 @@ def get_insights_fallback(business_type, challenges, goals, company_name) -> dic
                 "title": f"Automated customer feedback loop for {business_type}",
                 "score": 92,
                 "effort": "Medium",
-                "revenue_impact": "High"
+                "revenue_impact": "High",
+                "description": "Deploy automated post-interaction feedback forms to quickly capture buyer sentiment and optimize product delivery."
             },
             {
                 "title": f"Strategic partnership expansion in {business_type}",
                 "score": 88,
                 "effort": "High",
-                "revenue_impact": "High"
+                "revenue_impact": "High",
+                "description": "Collaborate with industry distributors and consultants to secure channel integrations and expand general market footprint."
             },
             {
                 "title": f"Optimizing workflow channels for resolving '{safe_split_get(challenges, 0, 'inefficiencies')}'",
                 "score": 85,
                 "effort": "Low",
-                "revenue_impact": "Medium"
+                "revenue_impact": "Medium",
+                "description": "Streamline communication and tracking templates, reducing representative review times and manual coordination overhead."
             },
             {
                 "title": f"Targeted customer case study campaigns in {business_type}",
                 "score": 78,
                 "effort": "Low",
-                "revenue_impact": "Medium"
+                "revenue_impact": "Medium",
+                "description": "Publish ROI-focused case studies detailing efficiency improvements to build buyer trust and accelerate sales cycles."
             },
             {
                 "title": "Tiered loyalty and account growth packages",
                 "score": 70,
                 "effort": "Medium",
-                "revenue_impact": "Medium"
+                "revenue_impact": "Medium",
+                "description": "Introduce volume-based pricing discounts and customized customer success frameworks to expand average deal sizes."
             }
         ],
         "revenue_opportunities": [
             {
                 "source": "Upselling premium packages and add-ons to key accounts",
                 "potential": "$45,000 revenue boost",
-                "timeline": "Next 60 days"
+                "timeline": "Next 60 days",
+                "description": "Engage high-utilization customer segments to upgrade to advanced analytical dashboards and premium support SLA tiers."
             },
             {
                 "source": f"Targeted launch of new features or product categories in {business_type}",
                 "potential": "$70,000 new pipeline",
-                "timeline": "Next 90 days"
+                "timeline": "Next 90 days",
+                "description": "Introduce customized features resolving stated operational challenges to trigger new department subscription expansions."
             },
             {
                 "source": "Value-added service subscriptions or contract extensions",
                 "potential": "$30,000 annual boost",
-                "timeline": "Next 120 days"
+                "timeline": "Next 120 days",
+                "description": "Bundle professional consulting audits and customized integrations packages alongside software core subscriptions."
             },
             {
                 "source": "Priority delivery and service agreements for elite clients",
                 "potential": "$25,000 revenue boost",
-                "timeline": "Next 60 days"
+                "timeline": "Next 60 days",
+                "description": "Charge a premium convenience fee to guarantee rapid turnaround times and dedicated representative channels."
             }
         ],
         "cost_optimization": [
