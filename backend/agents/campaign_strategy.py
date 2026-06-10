@@ -45,20 +45,22 @@ def campaign_node(state: CampaignState) -> dict:
         f"Platform: {platform}\n"
         f"Budget: {budget}\n"
         f"Goals: {goals}\n\n"
-        f"You are a premium, elite marketing strategist. Generate a highly tailored marketing campaign strategy for {co_name}'s product.\n"
-        f"Fill in every field of the schema with high-quality, specific, and realistic content. Keep descriptions and context blocks professional but concise (1-2 sentences per item) to respect token budgets.\n\n"
+        f"You are a premium, elite marketing strategist. Generate a concise, high-impact marketing campaign strategy for {co_name}'s product.\n"
+        f"Fill in every field of the schema with specific, realistic content. Keep descriptions concise and punchy to optimize readability and generation time.\n\n"
         f"Follow these guidelines for each schema field:\n"
         f"1. campaign_name: A strategic, high-impact campaign name (2-4 words).\n"
-        f"2. executive_campaign_overview: A concise 40-50 word executive summary explaining the growth opportunity and strategic objective.\n"
-        f"3. strategic_goals: Provide exactly 3 distinct strategic goals. For each, specify `goal_name` (2-4 words) and `business_context` (a short 1-sentence explanation of 10-15 words).\n"
-        f"4. persona_profile: Provide a short description of `business_challenges` (15-20 words), exactly 3 `pain_points` (4-8 words each), and exactly 3 `buying_motivations` (4-8 words each).\n"
-        f"5. funnel: Map out the 3 stages: `awareness`, `consideration`, and `conversion`. For each, provide exactly 2 specific `tactics` (3-6 words each), exactly 2 `kpis` (2-4 words each), and `budget_pct` integer.\n"
-        f"6. budget_allocation: Allocate percentages (totaling 100) across exactly 2-3 marketing channels. Provide `channel` name (2-3 words), integer `percent`, and a brief 1-sentence `rationale` (10-15 words).\n"
-        f"7. kpis: Provide exactly 3 campaign-level KPIs. For each, specify `metric` name (2-4 words), realistic target value/percentage (`target`), and `measurement` method (8-12 words).\n"
-        f"8. content_ideas: Generate exactly 1 content idea for each of the selected platforms: {platform}. Specify `title` (3-6 words), `format` (2-3 words), `platform` (name), and `description` (12-20 words).\n"
-        f"9. ad_copies: Generate exactly 1 ad copy variation for each of the selected platforms: {platform}. Specify `platform`, `headline` (4-8 words), `body` (15-25 words), and `cta` (2-4 words).\n"
-        f"10. social_media_posts: Generate exactly 1 social post for each of the selected platforms: {platform}. Specify `platform` and `copy` (15-25 words).\n"
-        f"11. calendar: Provide a week-by-week timeline for exactly 4 weeks (weeks 1 to 4). Specify `week` (integer), `theme` (3-5 words), and exactly 2 specific action `tasks` (4-8 words each).\n\n"
+        f"2. executive_campaign_overview: A concise, clear executive summary (40-50 words) explaining the growth opportunity and campaign targets.\n"
+        f"3. strategic_goals: Provide exactly 3 distinct strategic goals. For each, specify `goal_name` (2-4 words) and `business_context` (a short, clear explanation of 10-15 words showing how this aligns with metrics).\n"
+        f"4. persona_profile: Provide a concise description of `business_challenges` (15-20 words), exactly 3 `pain_points` (6-10 words each), and exactly 3 `buying_motivations` (6-10 words each).\n"
+        f"5. funnel: Map out the 3 stages: `awareness`, `consideration`, and `conversion`. For each, provide exactly 2 specific `tactics` (short B2B tactics, 6-10 words each), exactly 2 `kpis` (specific metrics, 3-6 words each), and `budget_pct` integer.\n"
+        f"6. budget_allocation: Allocate percentages (totaling 100) across exactly 2-3 marketing channels. Provide `channel` name, integer `percent`, and a concise `rationale` (10-15 words explaining the strategic selection).\n"
+        f"7. kpis: Provide exactly 3 campaign-level KPIs. For each, specify `metric` name, realistic target value/percentage (`target`), and `measurement` method (a short explanation of 8-12 words detailing tracking tools).\n"
+        f"8. content_ideas: Generate exactly 1 content idea for each of the selected platforms: {platform}. Specify `title`, `format`, `platform` (name), and `description` (a short explanation of 10-15 words outlining the content angle).\n"
+        f"9. ad_copies: Generate exactly 1 ad copy variation for each of the selected platforms: {platform}. Specify `platform`, `headline` (compelling B2B headline, 4-8 words), `body` (persuasive, punchy ad copy, 15-25 words), and `cta` (clear call-to-action, 2-3 words).\n"
+        f"10. social_media_posts: Generate exactly 1 high-quality social post for each of the selected platforms: {platform}. Specify `platform` and `copy`.\n"
+        f"    - For LinkedIn, Facebook, and WhatsApp, the `copy` MUST be a B2B marketing post of 8 to 12 lines (approx. 80 to 120 words) containing a hook, a brief problem statement, 3 short benefit bullet points, a CTA link, and 3-4 relevant hashtags.\n"
+        f"    - For Twitter/X, the `copy` MUST be a short post of 4 to 6 lines (approx. 40 to 60 words) containing a hook, a single core benefit, and 2-3 hashtags.\n"
+        f"11. calendar: Provide a week-by-week timeline for exactly 4 weeks (weeks 1 to 4). Specify `week` (integer), `theme` (weekly focus, 3-5 words), and exactly 2 action `tasks` (actionable and short, 6-10 words each).\n\n"
         f"{grounding}"
     )
 
@@ -301,23 +303,81 @@ def metrics_node(state: CampaignState) -> dict:
     platform_mapping_fallbacks = {
         "linkedin": {
             "platform": "LinkedIn",
-            "copy": f"Is your team looking to optimize workflows? 📉 With {co_name}'s latest integration for {state.get('product', 'our product')}, you can automate key tasks, reduce manual errors, and scale departments seamlessly. #Efficiency #Operations #B2B"
+            "copy": (
+                f"📊 Modern B2B operations departments are facing a silent crisis: manual bottleneck fatigue.\n\n"
+                f"Every day, high-value teams waste up to 40% of their working hours on repetitive manual data entries, "
+                f"siloed systems coordination, and human-error corrections. These bottlenecks don't just stall growth; "
+                f"they increase operational risks and lead to key talent burnout.\n\n"
+                f"At {co_name}, we built {state.get('product', 'our software solution')} to solve this exact challenge.\n\n"
+                f"Here is how our custom operational framework streamlines your workflow and drives success:\n"
+                f"• ⚡ AUTOMATED FLOWS: Eliminate legacy manual pipelines with intelligent, trigger-based task execution.\n"
+                f"• 📉 ERROR REDUCTION: Standardize operational logic to minimize system errors by up to 45%.\n"
+                f"• 🔍 CENTRALIZED TRACKING: Gain instant visibility with secure, real-time KPI health dashboards.\n"
+                f"• 🛠️ NATIVE INTEGRATION: Connect seamlessly with your existing tech stack without complex coding overrides.\n\n"
+                f"Operations leaders from mid-market to enterprise firms are using our playbook to optimize their teams, "
+                f"reduce operational overhead, and achieve higher ROI.\n\n"
+                f"Ready to unlock your team's true potential? Read our latest B2B case study guide and discover how easy "
+                f"it is to deploy automated workflows in days, not months.\n\n"
+                f"👉 Get your copy here: [Link]\n\n"
+                f"#Operations #B2B #Automation #WorkflowEfficiency #TechSolutions #BusinessGrowth"
+            )
         },
         "twitter": {
             "platform": "Twitter/X",
-            "copy": f"Stop letting manual processes stall your growth. 🚀 {state.get('product', 'our product')} by {co_name} deploys in days, delivering real-time operations tracking with robust security. Get your custom briefing: [Link] #WorkforceEfficiency #TechSolutions"
+            "copy": (
+                f"Stop letting legacy manual processes stall your team's growth. 🚀\n\n"
+                f"{state.get('product', 'our product')} by {co_name} deploys in days, delivering "
+                f"real-time operations tracking with robust security. Here is what you get:\n"
+                f"• ⚡ Automated trigger-based workflows\n"
+                f"• 📉 Up to 40% reduction in errors\n"
+                f"• 📊 Real-time health dashboard\n\n"
+                f"Optimize your B2B department and scale today. Get your custom briefing:\n"
+                f"👉 [Link]\n\n"
+                f"#Efficiency #TechSolutions #B2B #Automation"
+            )
         },
         "x": {
             "platform": "Twitter/X",
-            "copy": f"Stop letting manual processes stall your growth. 🚀 {state.get('product', 'our product')} by {co_name} deploys in days, delivering real-time operations tracking with robust security. Get your custom briefing: [Link] #WorkforceEfficiency #TechSolutions"
+            "copy": (
+                f"Stop letting legacy manual processes stall your team's growth. 🚀\n\n"
+                f"{state.get('product', 'our product')} by {co_name} deploys in days, delivering "
+                f"real-time operations tracking with robust security. Here is what you get:\n"
+                f"• ⚡ Automated trigger-based workflows\n"
+                f"• 📉 Up to 40% reduction in errors\n"
+                f"• 📊 Real-time health dashboard\n\n"
+                f"Optimize your B2B department and scale today. Get your custom briefing:\n"
+                f"👉 [Link]\n\n"
+                f"#Efficiency #TechSolutions #B2B #Automation"
+            )
         },
         "facebook": {
             "platform": "Facebook",
-            "copy": f"Accelerate your team's output. {co_name} introduces {state.get('product', 'our product')}, a comprehensive operational system built to eliminate manual bottlenecks, secure business logic, and drive high-impact outcomes. Learn how we can help your team scale: [Link]"
+            "copy": (
+                f"Accelerate your team's output! ⚡\n\n"
+                f"Are your operations stalled by manual bottlenecks and fragmented systems? You're not alone. "
+                f"Many mid-market B2B departments struggle with administrative overhead that costs time and revenue.\n\n"
+                f"{co_name} introduces {state.get('product', 'our product')}, a comprehensive operational system built to "
+                f"eliminate manual bottlenecks, secure business logic, and drive high-impact outcomes. We help you:\n"
+                f"• Automate task transitions between departments\n"
+                f"• Secure database workflows with B2B compliance standards\n"
+                f"• Gain real-time executive summaries of performance metrics\n\n"
+                f"Deploy our workflow framework to increase efficiency and support department scalability.\n\n"
+                f"Read our playbook and start optimizing today:\n"
+                f"👉 [Link]\n\n"
+                f"#BusinessTech #Operations #WorkflowAutomation #B2B #TechFlow"
+            )
         },
         "whatsapp": {
             "platform": "WhatsApp",
-            "copy": f"Hello! 👋 Discover how {co_name} helps you scale operations with {state.get('product', 'our product')}. Contact us to learn more! [Link]"
+            "copy": (
+                f"Hello! 👋 Discover how {co_name} helps you scale operations and optimize workflows with "
+                f"{state.get('product', 'our product')}.\n\n"
+                f"Key Benefits:\n"
+                f"✅ Automate repetitive B2B workflows\n"
+                f"✅ Reduce operational errors by up to 40%\n"
+                f"✅ Monitor key stats on real-time dashboards\n\n"
+                f"Contact us or schedule a custom demo today! [Link]"
+            )
         },
         "google": {
             "platform": "Google Search",

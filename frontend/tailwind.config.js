@@ -28,6 +28,8 @@ export default {
         'float': 'float 8s ease-in-out infinite',
         'float-delayed': 'float 8s ease-in-out 3s infinite',
         'float-slow': 'float 10s ease-in-out 5s infinite',
+        'spin-slow': 'spin 2s linear infinite',
+        'shake': 'shake 0.4s ease-in-out',
       },
       keyframes: {
         fadeIn: {
@@ -41,6 +43,13 @@ export default {
         float: {
           '0%, 100%': { transform: 'translate3d(0, 0, 0)' },
           '50%': { transform: 'translate3d(0, -20px, 0)' },
+        },
+        shake: {
+          '0%, 100%': { transform: 'translateX(0)' },
+          '20%': { transform: 'translateX(-6px)' },
+          '40%': { transform: 'translateX(6px)' },
+          '60%': { transform: 'translateX(-4px)' },
+          '80%': { transform: 'translateX(4px)' },
         },
       },
     },

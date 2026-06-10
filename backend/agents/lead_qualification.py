@@ -62,7 +62,7 @@ def lead_node(state: LeadState) -> dict:
     )
 
     sys_prompt = f"{co_prefix}You are a Senior Lead Qualification Specialist for {co_name}. Return JSON only."
-    result = invoke_structured(sys_prompt, prompt, schema_hint=LEAD_SCHEMA, retries=2, fast=False, max_tokens=1800)
+    result = invoke_structured(sys_prompt, prompt, schema_hint=LEAD_SCHEMA, retries=2, fast=False, max_tokens=1500)
     return {"result": result}
 
 def action_node(state: LeadState) -> dict:

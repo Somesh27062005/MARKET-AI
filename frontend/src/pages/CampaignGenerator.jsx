@@ -109,10 +109,45 @@ export default function CampaignGenerator({ getCsrfToken }) {
   };
 
   const executePostPublish = async (idx, platform, copy) => {
+    // 1. Copy the text to clipboard immediately in the user click event flow
+    await copyToClipboard(copy);
+
+    // 2. Open the platform URL immediately to bypass the browser's pop-up blocker
+    const cleanPlatform = platform.toLowerCase();
+    let destUrl = '';
+    if (cleanPlatform.includes('twitter') || cleanPlatform === 'x') {
+      destUrl = `https://twitter.com/intent/tweet?text=${encodeURIComponent(copy)}`;
+    } else if (cleanPlatform.includes('whatsapp')) {
+      destUrl = `https://web.whatsapp.com/send?text=${encodeURIComponent(copy)}`;
+    } else if (cleanPlatform.includes('linkedin')) {
+      destUrl = 'https://www.linkedin.com/feed/?shareActive=true';
+    } else if (cleanPlatform.includes('facebook')) {
+      destUrl = 'https://www.facebook.com/';
+    }
+
+    if (destUrl) {
+      window.open(destUrl, '_blank');
+    }
+
+    // 3. Update UI state to posting
     setPostingStates(prev => ({ ...prev, [idx]: 'posting' }));
-    const minDelay = new Promise(resolve => setTimeout(resolve, 1000));
+
+    // Show helpful toast instructions
+    if (cleanPlatform.includes('twitter') || cleanPlatform === 'x') {
+      showToast("Twitter compose opened! Post copy synced to clipboard as backup.");
+    } else if (cleanPlatform.includes('whatsapp')) {
+      showToast("WhatsApp Web opened! Text pre-filled.");
+    } else if (cleanPlatform.includes('linkedin')) {
+      showToast("Full post copied! Opening LinkedIn feed composer (press Ctrl+V to paste)...", "success");
+    } else if (cleanPlatform.includes('facebook')) {
+      showToast("Full post copied! Opening Facebook (press Ctrl+V to paste)...", "success");
+    } else {
+      showToast("Post content copied to clipboard!");
+    }
+
+    // 4. Log the post publish action to the backend database in the background
     try {
-      const apiCall = fetch('/api/v2/campaign/post', {
+      const res = await fetch('/api/v2/campaign/post', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -123,54 +158,17 @@ export default function CampaignGenerator({ getCsrfToken }) {
           copy: copy
         })
       });
-      const [res] = await Promise.all([apiCall, minDelay]);
-      const data = await res.json();
-      if (res.ok && data.success) {
+      if (res.ok) {
         setPostingStates(prev => ({ ...prev, [idx]: 'success' }));
-        
-        // Reset the button back to clickable state after 3.5 seconds
-        setTimeout(() => {
-          setPostingStates(prev => ({ ...prev, [idx]: 'idle' }));
-        }, 3500);
-
-        // Fail-safe copy to clipboard for all posts using robust fallback
-        await copyToClipboard(copy);
-        
-        const cleanPlatform = platform.toLowerCase();
-        if (cleanPlatform.includes('twitter') || cleanPlatform === 'x') {
-          // Twitter/X supports url pre-fill cleanly
-          const tweetUrl = `https://twitter.com/intent/tweet?text=${encodeURIComponent(copy)}`;
-          window.open(tweetUrl, '_blank');
-          showToast("Twitter compose opened! Post copy synced to clipboard as backup.");
-        } else if (cleanPlatform.includes('whatsapp')) {
-          // WhatsApp supports url pre-fill cleanly
-          const waUrl = `https://web.whatsapp.com/send?text=${encodeURIComponent(copy)}`;
-          window.open(waUrl, '_blank');
-          showToast("WhatsApp Web opened! Text pre-filled.");
-        } else if (cleanPlatform.includes('linkedin')) {
-          // Use clipboard copy + new tab redirect to LinkedIn feed composer to bypass URL parsing truncation bugs
-          showToast("Full post copied! Opening LinkedIn feed composer (press Ctrl+V to paste)...", "success");
-          window.open('https://www.linkedin.com/feed/?shareActive=true', '_blank');
-        } else if (cleanPlatform.includes('facebook')) {
-          showToast("Full post copied! Opening Facebook (press Ctrl+V to paste)...", "success");
-          window.open('https://www.facebook.com/', '_blank');
-        } else {
-          showToast("Post content copied to clipboard!");
-        }
       } else {
-        setPostingStates(prev => ({ ...prev, [idx]: 'error' }));
-        setTimeout(() => {
-          setPostingStates(prev => ({ ...prev, [idx]: 'idle' }));
-        }, 3000);
-        alert(data.error || `Failed to post to ${platform}`);
+        setPostingStates(prev => ({ ...prev, [idx]: 'idle' }));
       }
-    } catch (err) {
-      console.error(err);
-      setPostingStates(prev => ({ ...prev, [idx]: 'error' }));
       setTimeout(() => {
         setPostingStates(prev => ({ ...prev, [idx]: 'idle' }));
-      }, 3000);
-      alert('Network error during posting simulation.');
+      }, 3500);
+    } catch (err) {
+      console.error("Failed to log post publish to backend:", err);
+      setPostingStates(prev => ({ ...prev, [idx]: 'idle' }));
     }
   };
 

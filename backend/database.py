@@ -76,14 +76,7 @@ def init_db():
     )
     """)
     
-    # Pre-populate demo user
-    cursor.execute("SELECT 1 FROM users WHERE email = 'demo@marketmind.ai'")
-    if not cursor.fetchone():
-        cursor.execute("""
-        INSERT INTO users (email, password, name, firstName, lastName, avatar, joinedAt)
-        VALUES ('demo@marketmind.ai', 'password123', 'Demo User', 'Demo', 'User', 'D', '2026-06-06T00:00:00.000Z')
-        """)
-        
+
     # Saved History Table
     cursor.execute("""
     CREATE TABLE IF NOT EXISTS history (
@@ -459,6 +452,32 @@ def init_db():
     )
     """)
 
+    # Logo Maker History Table
+    cursor.execute("""
+    CREATE TABLE IF NOT EXISTS logo_history (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        user_email TEXT NOT NULL,
+        prompt TEXT NOT NULL,
+        image_data TEXT NOT NULL,
+        created_at TEXT NOT NULL,
+        FOREIGN KEY (user_email) REFERENCES users (email) ON DELETE CASCADE
+    )
+    """)
+
+    # Chat History Table
+    cursor.execute("""
+    CREATE TABLE IF NOT EXISTS chat_history (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        user_email TEXT NOT NULL,
+        domain TEXT NOT NULL,
+        role TEXT NOT NULL,
+        content TEXT NOT NULL,
+        created_at TEXT NOT NULL,
+        FOREIGN KEY (user_email) REFERENCES users (email) ON DELETE CASCADE
+    )
+    """)
+    cursor.execute("CREATE INDEX IF NOT EXISTS idx_chat_email_domain ON chat_history(user_email, domain)")
+
     conn.commit()
     conn.close()
     print("✅ SQLite database initialized successfully with demo data, stock tickers, and new enterprise analyzer tables.")
@@ -490,6 +509,13 @@ def create_user(email, password, name, first_name="", last_name="", avatar="", j
     conn.close()
     return success
 
+def update_user_password(email, new_password):
+    conn = get_db()
+    conn.execute("UPDATE users SET password = ? WHERE email = ?", (new_password, email))
+    conn.commit()
+    conn.close()
+    return True
+
 # History Operations
 def save_history(email, type_name, title, input_dict, result):
     conn = get_db()
@@ -513,6 +539,37 @@ def get_user_history(email):
 def delete_history(email, record_id):
     conn = get_db()
     conn.execute("DELETE FROM history WHERE user_email = ? AND id = ?", (email, record_id))
+    conn.commit()
+    conn.close()
+    return True
+
+# Chat Operations
+def add_chat_message(email, domain, role, content):
+    conn = get_db()
+    created_at = datetime.utcnow().isoformat() + "Z"
+    cursor = conn.cursor()
+    cursor.execute("""
+    INSERT INTO chat_history (user_email, domain, role, content, created_at)
+    VALUES (?, ?, ?, ?, ?)
+    """, (email, domain, role, content, created_at))
+    conn.commit()
+    new_id = cursor.lastrowid
+    conn.close()
+    return new_id
+
+def get_chat_history(email, domain, limit=100):
+    conn = get_db()
+    rows = conn.execute("""
+    SELECT role, content, created_at FROM chat_history
+    WHERE user_email = ? AND domain = ?
+    ORDER BY id ASC LIMIT ?
+    """, (email, domain, limit)).fetchall()
+    conn.close()
+    return [dict(r) for r in rows]
+
+def clear_chat_history(email, domain):
+    conn = get_db()
+    conn.execute("DELETE FROM chat_history WHERE user_email = ? AND domain = ?", (email, domain))
     conn.commit()
     conn.close()
     return True
@@ -1349,6 +1406,40 @@ def save_social_integration(email, platform, connected, username):
                 INSERT INTO social_integrations (user_email, platform, connected, username)
                 VALUES ({PH}, {PH}, {PH}, {PH})
             """, (email, platform, 1 if connected else 0, username))
+        _commit(conn)
+        return True
+    finally:
+        conn.close()
+
+
+def add_logo_history(email, prompt, image_data):
+    conn = get_db()
+    created_at = datetime.utcnow().isoformat() + "Z"
+    try:
+        _exec(conn, f"""
+            INSERT INTO logo_history (user_email, prompt, image_data, created_at)
+            VALUES ({PH}, {PH}, {PH}, {PH})
+        """, (email, prompt, image_data, created_at))
+        _commit(conn)
+        return True
+    finally:
+        conn.close()
+
+
+def get_logo_history(email):
+    conn = get_db()
+    try:
+        cur = _exec(conn, f"SELECT * FROM logo_history WHERE user_email = {PH} ORDER BY created_at DESC", (email,))
+        rows = _fetchall(cur)
+        return rows
+    finally:
+        conn.close()
+
+
+def delete_logo_history(email, record_id):
+    conn = get_db()
+    try:
+        _exec(conn, f"DELETE FROM logo_history WHERE user_email = {PH} AND id = {PH}", (email, record_id))
         _commit(conn)
         return True
     finally:

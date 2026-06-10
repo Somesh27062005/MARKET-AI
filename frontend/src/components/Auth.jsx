@@ -4,8 +4,8 @@ import GlassCard from './GlassCard.jsx';
 
 export default function Auth({ onAuthSuccess }) {
   const [view, setView] = useState('login'); // 'login' | 'register' | 'reset'
-  const [email, setEmail] = useState('demo@marketmind.ai');
-  const [password, setPassword] = useState('password123');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
   const [name, setName] = useState('');
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
@@ -239,12 +239,7 @@ export default function Auth({ onAuthSuccess }) {
           </div>
         </GlassCard>
 
-        {/* Demo credentials hint */}
-        {view === 'login' && (
-          <div className="text-center mt-4 text-[10px] text-gray-600 bg-white/2 rounded-xl py-2 px-4 border border-white/2 max-w-sm mx-auto">
-            💡 <strong>Demo Mode Pre-filled:</strong> Just click <strong>Sign In</strong> to explore the full dashboard instantly.
-          </div>
-        )}
+        {/* Demo credentials hint (removed) */}
       </div>
     </div>
   );

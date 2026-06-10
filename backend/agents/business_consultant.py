@@ -58,7 +58,7 @@ def insights_node(state: InsightsState) -> dict:
         f"8. Make exactly 4 strategic_recommendations (recommendation: 8-12 words, priority: High/Medium/Low, impact: 8-12 words, effort: Low/Medium/High).\n"
         f"9. Map exactly 4 initiatives on a priority_matrix. For each specify initiative (3-5 words), urgency (High/Medium/Low), and impact (High/Medium/Low).\n"
         f"10. Set exactly 4 KPI targets using actual metrics (kpi: 2-4 words, current, target, timeline: e.g. '60 days').\n"
-        f"11. Create a 30/60/90-day implementation roadmap (using arrays plan_30_day, plan_60_day, and plan_90_day). Provide exactly 2 actions per phase. Each item must have: action (3-5 words), description (exactly 2 sentences explaining what to do and why), owner, success_metric (6-10 words), tools (list of exactly 2 specific tools), and kpi (measurable target value).\n"
+        f"11. Create a 30/60/90-day implementation roadmap (using arrays plan_30_day, plan_60_day, and plan_90_day). Provide exactly 2 actions per phase. Each item must have: action (3-5 words), owner, and success_metric (6-10 words).\n"
         f"12. Assess exactly 3 competitive_risks (risk: 6-10 words, competitor: 1-2 words, likelihood: High/Medium/Low) and exactly 3 operational_risks (risk: 6-10 words, probability: High/Medium/Low, impact: High/Medium/Low, mitigation: 10-15 words).\n"
         f"{grounding}"
     )

@@ -111,52 +111,52 @@
 /* High-fidelity overrides for dark Tailwind classes */
 @layer utilities {
   /* Dynamic text overrides */
-  .text-white {
+  html:not(.dark) .text-white {
     color: #0f172a !important;
   }
-  .text-gray-100 {
+  html:not(.dark) .text-gray-100 {
     color: #1e293b !important;
   }
-  .text-gray-200 {
+  html:not(.dark) .text-gray-200 {
     color: #334155 !important;
   }
-  .text-gray-300 {
+  html:not(.dark) .text-gray-300 {
     color: #475569 !important;
   }
-  .text-gray-400 {
+  html:not(.dark) .text-gray-400 {
     color: #64748b !important;
   }
-  .text-gray-500 {
+  html:not(.dark) .text-gray-500 {
     color: #94a3b8 !important;
   }
-  .text-gray-600 {
+  html:not(.dark) .text-gray-600 {
     color: #cbd5e1 !important;
   }
-  .text-indigo-200 {
+  html:not(.dark) .text-indigo-200 {
     color: #4338ca !important;
   }
-  .text-indigo-300 {
+  html:not(.dark) .text-indigo-300 {
     color: #4f46e5 !important;
   }
-  .text-indigo-400 {
+  html:not(.dark) .text-indigo-400 {
     color: #4f46e5 !important;
   }
-  .text-indigo-900 {
+  html:not(.dark) .text-indigo-900 {
     color: #e0e7ff !important;
   }
-  .text-cyan-400 {
+  html:not(.dark) .text-cyan-400 {
     color: #0284c7 !important;
   }
-  .text-emerald-400 {
+  html:not(.dark) .text-emerald-400 {
     color: #059669 !important;
   }
-  .text-emerald-300 {
+  html:not(.dark) .text-emerald-300 {
     color: #047857 !important;
   }
-  .text-rose-400 {
+  html:not(.dark) .text-rose-400 {
     color: #dc2626 !important;
   }
-  .text-yellow-400 {
+  html:not(.dark) .text-yellow-400 {
     color: #d97706 !important;
   }
 
@@ -192,74 +192,74 @@
   }
 
   /* Specific Layout element overrides */
-  aside nav a {
+  html:not(.dark) aside nav a {
     color: #475569 !important;
     background: transparent !important;
     border: none !important;
     border-radius: 12px !important;
   }
-  aside nav a:hover {
+  html:not(.dark) aside nav a:hover {
     color: #4f46e5 !important;
     background: rgba(79, 70, 229, 0.04) !important;
   }
-  aside nav a.active {
+  html:not(.dark) aside nav a.active {
     color: #4f46e5 !important;
     background: rgba(79, 70, 229, 0.08) !important;
     border: none !important;
     font-weight: 600 !important;
     box-shadow: inset 0 1px 0 0 rgba(255, 255, 255, 0.6);
   }
-  aside nav a.active svg {
+  html:not(.dark) aside nav a.active svg {
     color: #4f46e5 !important;
   }
-  aside div p.text-white {
+  html:not(.dark) aside div p.text-white {
     color: #1e293b !important;
   }
-  aside div p.text-gray-500 {
+  html:not(.dark) aside div p.text-gray-500 {
     color: #64748b !important;
   }
 
   /* Background overrides */
-  .bg-surface-900\/60 {
+  html:not(.dark) .bg-surface-900\/60 {
     background-color: rgba(255, 255, 255, 0.8) !important;
   }
-  .bg-surface-800\/60 {
+  html:not(.dark) .bg-surface-800\/60 {
     background-color: rgba(255, 255, 255, 0.8) !important;
   }
-  .bg-surface-800\/20 {
+  html:not(.dark) .bg-surface-800\/20 {
     background-color: rgba(15, 23, 42, 0.02) !important;
   }
-  .bg-white\/2 {
+  html:not(.dark) .bg-white\/2 {
     background-color: rgba(15, 23, 42, 0.015) !important;
   }
-  .bg-white\/5 {
+  html:not(.dark) .bg-white\/5 {
     background-color: rgba(15, 23, 42, 0.035) !important;
   }
-  .bg-white\/10 {
+  html:not(.dark) .bg-white\/10 {
     background-color: rgba(15, 23, 42, 0.05) !important;
   }
-  .bg-indigo-950\/10 {
+  html:not(.dark) .bg-indigo-950\/10 {
     background-color: rgba(79, 70, 229, 0.05) !important;
   }
-  .bg-indigo-600\/20 {
+  html:not(.dark) .bg-indigo-600\/20 {
     background-color: rgba(79, 70, 229, 0.08) !important;
   }
-  .bg-emerald-950\/5 {
+  html:not(.dark) .bg-emerald-950\/5 {
     background-color: rgba(5, 150, 105, 0.05) !important;
   }
-  .bg-rose-950\/5 {
+  html:not(.dark) .bg-rose-950\/5 {
     background-color: rgba(220, 38, 38, 0.05) !important;
   }
-  .bg-yellow-950\/5 {
+  html:not(.dark) .bg-yellow-950\/5 {
     background-color: rgba(217, 119, 6, 0.05) !important;
   }
-  .bg-indigo-950\/20 {
+  html:not(.dark) .bg-indigo-950\/20 {
     background-color: rgba(79, 70, 229, 0.08) !important;
   }
-  .bg-indigo-950\/30 {
+  html:not(.dark) .bg-indigo-950\/30 {
     background-color: rgba(79, 70, 229, 0.12) !important;
   }
-  .bg-surface-900\/90 {
+  html:not(.dark) .bg-surface-900\/90 {
     background-color: rgba(255, 255, 255, 0.95) !important;
   }
 
@@ -269,17 +269,206 @@
   }
 }
 
-/* AI Chatbot Assistant Premium Contrast Styles */
-.chat-user-message {
-  background: linear-gradient(135deg, #4f46e5 0%, #6366f1 100%) !important;
-  border-color: rgba(79, 70, 229, 0.2) !important;
+/* Premium Dark theme variable outputs & styles */
+html.dark {
+  --surface-900-rgb: 15, 23, 42; /* Slate-900: #0f172a */
+  --surface-800-rgb: 30, 41, 59; /* Slate-800: #1e293b */
+  --surface-700-rgb: 51, 65, 85; /* Slate-700: #334155 */
+  --surface-600-rgb: 71, 85, 105; /* Slate-600: #475569 */
+  --surface-500-rgb: 100, 116, 139; /* Slate-500: #64748b */
 }
-.chat-user-message,
-.chat-user-message p,
-.chat-user-message strong,
-.chat-user-message li {
+
+html.dark body {
+  background-color: #0f172a !important;
+  color: #cbd5e1 !important;
+  background-image: 
+    radial-gradient(circle at 5% 5%, rgba(79, 70, 229, 0.12) 0%, transparent 45%),
+    radial-gradient(circle at 95% 95%, rgba(2, 132, 199, 0.12) 0%, transparent 45%),
+    radial-gradient(circle at 50% 50%, rgba(244, 63, 94, 0.03) 0%, transparent 60%) !important;
+}
+
+html.dark h1, html.dark h2, html.dark h3, html.dark h4, html.dark h5, html.dark h6 {
+  color: #f8fafc !important;
+}
+
+/* Dark mode panel and input overrides */
+html.dark .glass-panel {
+  background: rgba(15, 23, 42, 0.7) !important;
+  border: 1px solid rgba(255, 255, 255, 0.08) !important;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.12) !important;
+  border-right: 1px solid rgba(255, 255, 255, 0.12) !important;
+  box-shadow: 
+    0 10px 30px -10px rgba(0, 0, 0, 0.3),
+    0 1px 3px 0 rgba(0, 0, 0, 0.2),
+    inset 0 1px 0 0 rgba(255, 255, 255, 0.05) !important;
+}
+
+html.dark .glass-panel-interactive:hover {
+  background: rgba(15, 23, 42, 0.85) !important;
+  border-color: rgba(255, 255, 255, 0.15) !important;
+  border-bottom-color: rgba(79, 70, 229, 0.4) !important;
+  border-right-color: rgba(79, 70, 229, 0.4) !important;
+  box-shadow: 
+    0 20px 40px -15px rgba(0, 0, 0, 0.5),
+    0 1px 3px 0 rgba(79, 70, 229, 0.1) !important;
+}
+
+html.dark .glass-input {
+  background: rgba(15, 23, 42, 0.8) !important;
+  border: 1px solid rgba(255, 255, 255, 0.1) !important;
+  color: #f8fafc !important;
+}
+
+html.dark .glass-input::placeholder {
+  color: #64748b !important;
+}
+
+html.dark .glass-button-secondary {
+  background: rgba(30, 41, 59, 0.8) !important;
+  border: 1px solid rgba(255, 255, 255, 0.1) !important;
+  color: #e2e8f0 !important;
+}
+
+html.dark .glass-button-secondary:hover {
+  background: rgba(30, 41, 59, 1) !important;
+}
+
+/* Sidebar navigation in dark mode */
+html.dark aside nav a {
+  color: #94a3b8 !important;
+}
+html.dark aside nav a:hover {
   color: #ffffff !important;
+  background: rgba(255, 255, 255, 0.05) !important;
 }
+html.dark aside nav a.active {
+  color: #ffffff !important;
+  background: rgba(79, 70, 229, 0.2) !important;
+  box-shadow: inset 0 1px 0 0 rgba(255, 255, 255, 0.1) !important;
+}
+html.dark aside nav a.active svg {
+  color: #818cf8 !important;
+}
+html.dark aside div p.text-white {
+  color: #f1f5f9 !important;
+}
+html.dark aside div p.text-gray-500 {
+  color: #94a3b8 !important;
+}
+
+/* Profile dropdown menu overrides for dark theme */
+html.dark .bg-white {
+  background-color: #1e293b !important;
+  border-color: rgba(255, 255, 255, 0.1) !important;
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.5) !important;
+}
+html.dark .hover\:bg-slate-50:hover {
+  background-color: rgba(255, 255, 255, 0.05) !important;
+}
+html.dark .text-gray-300 {
+  color: #cbd5e1 !important;
+}
+
+/* Background overrides in dark mode */
+html.dark .bg-surface-900\/60 {
+  background-color: rgba(15, 23, 42, 0.6) !important;
+}
+html.dark .bg-surface-800\/60 {
+  background-color: rgba(30, 41, 59, 0.6) !important;
+}
+html.dark .bg-surface-800\/20 {
+  background-color: rgba(255, 255, 255, 0.02) !important;
+}
+html.dark .bg-white\/2 {
+  background-color: rgba(255, 255, 255, 0.02) !important;
+}
+html.dark .bg-white\/5 {
+  background-color: rgba(255, 255, 255, 0.05) !important;
+}
+html.dark .bg-white\/10 {
+  background-color: rgba(255, 255, 255, 0.1) !important;
+}
+html.dark .bg-indigo-950\/10 {
+  background-color: rgba(79, 70, 229, 0.1) !important;
+}
+html.dark .bg-indigo-600\/20 {
+  background-color: rgba(79, 70, 229, 0.2) !important;
+}
+html.dark .bg-emerald-950\/5 {
+  background-color: rgba(5, 150, 105, 0.1) !important;
+}
+html.dark .bg-rose-950\/5 {
+  background-color: rgba(220, 38, 38, 0.1) !important;
+}
+html.dark .bg-yellow-950\/5 {
+  background-color: rgba(217, 119, 6, 0.1) !important;
+}
+html.dark .bg-indigo-950\/20 {
+  background-color: rgba(79, 70, 229, 0.2) !important;
+}
+html.dark .bg-indigo-950\/30 {
+  background-color: rgba(79, 70, 229, 0.3) !important;
+}
+html.dark .bg-surface-900\/90 {
+  background-color: rgba(15, 23, 42, 0.9) !important;
+}
+
+/* ── Chat Panel — Solid opaque backgrounds (no bleed-through) ─────────────── */
+
+/* Light theme */
+.chat-panel {
+  background-color: #ffffff !important;
+  border-color: #e2e8f0 !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+}
+.chat-panel .chat-panel-header {
+  background-color: #f8fafc !important;
+  border-color: #e2e8f0 !important;
+}
+.chat-panel .chat-panel-messages {
+  background-color: #f1f5f9 !important;
+}
+.chat-panel .chat-panel-footer {
+  background-color: #f8fafc !important;
+  border-color: #e2e8f0 !important;
+}
+/* Force title text dark in light mode inside chat panel */
+.chat-panel .chat-panel-header span {
+  color: #0f172a !important;
+}
+
+/* Dark theme */
+html.dark .chat-panel {
+  background-color: #0f172a !important;
+  border-color: rgba(255, 255, 255, 0.1) !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+  box-shadow:
+    0 25px 50px -12px rgba(0, 0, 0, 0.6),
+    0 0 0 1px rgba(255, 255, 255, 0.05) !important;
+}
+html.dark .chat-panel .chat-panel-header {
+  background-color: #1e293b !important;
+  border-color: rgba(255, 255, 255, 0.08) !important;
+}
+html.dark .chat-panel .chat-panel-messages {
+  background-color: #0f172a !important;
+}
+html.dark .chat-panel .chat-panel-footer {
+  background-color: #1e293b !important;
+  border-color: rgba(255, 255, 255, 0.08) !important;
+}
+/* Title text stays white in dark chat panel */
+html.dark .chat-panel .chat-panel-header span {
+  color: #f8fafc !important;
+}
+/* Icon buttons in header stay muted */
+html.dark .chat-panel .chat-panel-header button svg {
+  color: #94a3b8 !important;
+}
+
+/* Chat Assistant message overrides */
 .chat-assistant-message {
   background-color: #f1f5f9 !important;
   border-color: #cbd5e1 !important;
@@ -290,8 +479,30 @@
 .chat-assistant-message li {
   color: #0f172a !important;
 }
+html.dark .chat-assistant-message {
+  background-color: #1e293b !important;
+  border-color: rgba(255, 255, 255, 0.1) !important;
+}
+html.dark .chat-assistant-message,
+html.dark .chat-assistant-message p,
+html.dark .chat-assistant-message strong,
+html.dark .chat-assistant-message li {
+  color: #f1f5f9 !important;
+}
 
-/* Chat Prompt Suggestions Chip */
+/* User bubble */
+.chat-user-message {
+  background: linear-gradient(135deg, #4f46e5 0%, #6366f1 100%) !important;
+  border-color: rgba(79, 70, 229, 0.2) !important;
+}
+.chat-user-message,
+.chat-user-message p,
+.chat-user-message strong,
+.chat-user-message li {
+  color: #ffffff !important;
+}
+
+/* Suggestion chips — light */
 button.chat-suggestion-chip {
   background-color: #e0e7ff !important;
   color: #312e81 !important;
@@ -301,6 +512,24 @@ button.chat-suggestion-chip:hover {
   background-color: #c7d2fe !important;
   color: #1e1b4b !important;
   border-color: rgba(79, 70, 229, 0.3) !important;
+}
+/* Suggestion chips — dark */
+html.dark button.chat-suggestion-chip {
+  background-color: rgba(79, 70, 229, 0.2) !important;
+  color: #e0e7ff !important;
+  border-color: rgba(79, 70, 229, 0.4) !important;
+}
+html.dark button.chat-suggestion-chip:hover {
+  background-color: rgba(79, 70, 229, 0.3) !important;
+  color: #ffffff !important;
+}
+
+/* Scrollbar tweaks — dark mode */
+html.dark .custom-scrollbar::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.1);
+}
+html.dark .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.2);
 }
 
 /* Infinite Scrolling Marquee for Stock Ticker */

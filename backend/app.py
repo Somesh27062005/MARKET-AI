@@ -157,7 +157,7 @@ import secrets
 def handle_csrf():
     if request.method in ["POST", "PUT", "DELETE", "PATCH"]:
         path = request.path
-        if path in ["/api/auth/login", "/api/auth/register", "/api/auth/reset-password"] or path.startswith("/api/auth/google"):
+        if path in ["/api/auth/login", "/api/auth/register", "/api/auth/reset-password", "/api/auth/logout"] or path.startswith("/api/auth/google"):
             return
         
         csrf_cookie = request.cookies.get("csrf_token")
@@ -241,17 +241,8 @@ def clean_markdown(text: str) -> str:
 
 # ─── Flask Routes ────────────────────────────────────────────────────────────
 
-# In-memory user database
-USERS_DB = {
-    "demo@marketmind.ai": {
-        "password": "password123",
-        "name": "Demo User",
-        "firstName": "Demo",
-        "lastName": "User",
-        "avatar": "D",
-        "joinedAt": "2026-06-06T00:00:00.000Z"
-    }
-}
+# In-memory user database (removed)
+USERS_DB = {}
 
 @app.route("/")
 def home():
@@ -286,20 +277,21 @@ def auth_login():
     if not email or not password:
         return jsonify({"error": "Email and password are required"}), 400
         
-    user = USERS_DB.get(email)
+    user = database.get_user(email)
     if not user or user["password"] != password:
         # Frictionless Auto-registration for ease of evaluation
         if len(password) >= 4:
             name = email.split("@")[0].capitalize()
-            USERS_DB[email] = {
-                "password": password,
-                "name": name,
-                "firstName": name,
-                "lastName": "",
-                "avatar": name[0] if name else "U",
-                "joinedAt": "2026-06-06T00:00:00.000Z"
-            }
-            user = USERS_DB[email]
+            database.create_user(
+                email=email,
+                password=password,
+                name=name,
+                first_name=name,
+                last_name="",
+                avatar=name[0] if name else "U",
+                joined_at="2026-06-06T00:00:00.000Z"
+            )
+            user = database.get_user(email)
         else:
             return jsonify({"error": "Invalid credentials. Password must be at least 4 characters."}), 401
             
@@ -318,10 +310,9 @@ def auth_login():
 @app.route("/api/auth/register", methods=["POST"])
 def auth_register():
     data = request.get_json() or {}
-    first_name = data.get("firstName", "").strip()
-    last_name = data.get("lastName", "").strip()
     email = data.get("email", "").strip()
     password = data.get("password", "")
+    name = data.get("name", "").strip()
     
     if not email or not password:
         return jsonify({"error": "Email and password are required"}), 400
@@ -329,19 +320,29 @@ def auth_register():
     if len(password) < 8:
         return jsonify({"error": "Password must be at least 8 characters"}), 400
         
-    if email in USERS_DB:
+    if database.get_user(email):
         return jsonify({"error": "Email is already registered"}), 400
         
-    name = f"{first_name} {last_name}".strip() or email.split("@")[0].capitalize()
-    USERS_DB[email] = {
-        "password": password,
-        "name": name,
-        "firstName": first_name,
-        "lastName": last_name,
-        "avatar": first_name[0].upper() if first_name else "U",
-        "joinedAt": "2026-06-06T00:00:00.000Z"
-    }
+    if not name:
+        name = email.split("@")[0].capitalize()
+        
+    parts = name.split(" ")
+    first_name = parts[0] if parts else name
+    last_name = " ".join(parts[1:]) if len(parts) > 1 else ""
     
+    success = database.create_user(
+        email=email,
+        password=password,
+        name=name,
+        first_name=first_name,
+        last_name=last_name,
+        avatar=first_name[0].upper() if first_name else "U",
+        joined_at="2026-06-06T00:00:00.000Z"
+    )
+    
+    if not success:
+        return jsonify({"error": "Failed to create user"}), 500
+        
     return jsonify({"success": True, "message": "Account created successfully"})
 
 
@@ -349,11 +350,17 @@ def auth_register():
 def auth_reset_password():
     data = request.get_json() or {}
     email = data.get("email", "").strip()
+    new_password = data.get("newPassword", "")
     
-    if not email:
-        return jsonify({"error": "Email is required"}), 400
+    if not email or not new_password:
+        return jsonify({"error": "Email and new password are required"}), 400
         
-    return jsonify({"success": True, "message": "Password reset instructions sent"})
+    user = database.get_user(email)
+    if not user:
+        return jsonify({"error": "User not found"}), 404
+        
+    database.update_user_password(email, new_password)
+    return jsonify({"success": True, "message": "Password reset successfully"})
 
 @app.route("/api/auth/me", methods=["GET"])
 def auth_me():
@@ -383,7 +390,7 @@ def auth_logout():
 @app.route("/api/auth/google")
 def auth_google():
     if not client:
-        return jsonify({"message": "Google OAuth is not configured yet. This is a mock success response.", "user": {"email": "demo@marketmind.ai", "name": "Demo User"}}), 200
+        return redirect("http://localhost:5173/login?error=Google%20OAuth%20not%20configured%20on%20backend")
 
     google_provider_cfg = get_google_provider_cfg()
     authorization_endpoint = google_provider_cfg["authorization_endpoint"]
@@ -416,7 +423,12 @@ def auth_google_callback():
         client_secret=GOOGLE_CLIENT_SECRET
     )
     
-    token_response = requests.post(token_url, headers=headers, data=body)
+    token_response = requests.post(
+        token_url,
+        headers=headers,
+        data=body,
+        auth=(GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET)
+    )
 
     try:
         client.parse_request_body_response(json.dumps(token_response.json()))
@@ -471,14 +483,18 @@ def health_check():
 
 @app.route("/api/history", methods=["GET"])
 def get_history():
-    email = session.get("user_email") or "demo@marketmind.ai"
+    email = session.get("user_email")
+    if not email:
+        return jsonify({"error": "Not authenticated"}), 401
     history = database.get_user_history(email)
     return jsonify({"success": True, "history": history})
 
 @app.route("/api/history/save", methods=["POST"])
 def save_to_history():
     data = request.get_json() or {}
-    email = session.get("user_email") or "demo@marketmind.ai"
+    email = session.get("user_email")
+    if not email:
+        return jsonify({"error": "Not authenticated"}), 401
     type_name = data.get("type", "unknown")
     title = data.get("title", f"Saved {type_name}")
     input_data = data.get("input_data", {})
@@ -488,7 +504,9 @@ def save_to_history():
 
 @app.route("/api/history/<int:record_id>", methods=["DELETE"])
 def delete_history_record(record_id):
-    email = session.get("user_email") or "demo@marketmind.ai"
+    email = session.get("user_email")
+    if not email:
+        return jsonify({"error": "Not authenticated"}), 401
     success = database.delete_history(email, record_id)
     return jsonify({"success": success})
 
@@ -496,14 +514,18 @@ def delete_history_record(record_id):
 
 @app.route("/api/crm/leads", methods=["GET"])
 def get_crm_leads():
-    email = session.get("user_email") or "demo@marketmind.ai"
+    email = session.get("user_email")
+    if not email:
+        return jsonify({"error": "Not authenticated"}), 401
     leads = database.get_crm_leads(email)
     return jsonify({"success": True, "leads": leads})
 
 @app.route("/api/crm/leads", methods=["POST"])
 def add_lead():
     data = request.get_json() or {}
-    email = session.get("user_email") or "demo@marketmind.ai"
+    email = session.get("user_email")
+    if not email:
+        return jsonify({"error": "Not authenticated"}), 401
     name = data.get("name", "Unknown")
     company = data.get("company", "")
     score = data.get("score", 0)
@@ -515,7 +537,9 @@ def add_lead():
 @app.route("/api/crm/leads/<int:lead_id>", methods=["PUT"])
 def update_lead(lead_id):
     data = request.get_json() or {}
-    email = session.get("user_email") or "demo@marketmind.ai"
+    email = session.get("user_email")
+    if not email:
+        return jsonify({"error": "Not authenticated"}), 401
     status = data.get("status")
     score = data.get("score")
     grade = data.get("grade")
@@ -550,14 +574,18 @@ def update_lead(lead_id):
 
 @app.route("/api/crm/leads/<int:lead_id>", methods=["DELETE"])
 def delete_lead(lead_id):
-    email = session.get("user_email") or "demo@marketmind.ai"
+    email = session.get("user_email")
+    if not email:
+        return jsonify({"error": "Not authenticated"}), 401
     database.delete_crm_lead(email, lead_id)
     return jsonify({"success": True})
 
 @app.route("/api/dashboard/stats", methods=["GET"])
 def get_dashboard_stats():
     import random
-    email = session.get("user_email") or "demo@marketmind.ai"
+    email = session.get("user_email")
+    if not email:
+        return jsonify({"error": "Not authenticated"}), 401
     
     # Check if user has filled details (i.e. has a profile)
     profile = database.get_user_profile(email)
@@ -751,38 +779,87 @@ def get_dashboard_stats():
     accuracy_jitter = random.uniform(-0.4, 0.4) if raw_accuracy > 0 else 0.0
     live_accuracy = round(min(99.9, max(0.0, raw_accuracy + accuracy_jitter)), 1)
 
-    # ── Override with user-provided company metrics when available ──
+    # ── Override / derive charts from company metrics when DB tables are sparse ──
     if has_company_metrics:
         cm = company_metrics
-        cm_revenue = cm.get("monthly_revenue", 0) or 0
-        cm_leads = cm.get("monthly_leads", 0) or 0
-        cm_cvr = cm.get("conversion_rate", 0) or 0
-        cm_trend = cm.get("revenue_trend", [])
-        cm_clicks = cm.get("campaign_clicks", [])
-        cm_dist = cm.get("lead_distribution", [])
+        cm_revenue    = float(cm.get("monthly_revenue", 0) or 0)
+        cm_leads      = int(cm.get("monthly_leads", 0) or 0)
+        cm_cvr        = float(cm.get("conversion_rate", 0) or 0)
+        cm_win        = float(cm.get("win_rate", 0) or 0)
+        cm_cac        = float(cm.get("cac", 0) or 0)
+        cm_ltv        = float(cm.get("ltv", 0) or 0)
+        cm_campaigns  = int(cm.get("active_campaigns", 0) or 0)
+        cm_top_chan   = cm.get("top_channel", "") or ""
+        cm_deal_size  = float(cm.get("avg_deal_size", 0) or 0)
+        cm_trend_raw  = cm.get("revenue_trend", [])
+        cm_clicks_raw = cm.get("campaign_clicks", [])
+        cm_dist_raw   = cm.get("lead_distribution", [])
 
-        # Compute live revenue from company input (no jitter for precision)
-        cm_revenue_val = cm_revenue
-        if cm_revenue_val > 0:
-            live_revenue = cm_revenue_val
+        # 1. REVENUE: use company monthly_revenue to build a 12-month growth curve
+        #    if we don't already have a meaningful sales_trend from history.
+        history_has_data = any(v > 0 for v in final_sales_trend)
+        if not history_has_data and cm_revenue > 0:
+            if cm_trend_raw and len(cm_trend_raw) >= 6:
+                # User explicitly provided trend data
+                final_sales_trend = [float(v) for v in cm_trend_raw[:12]]
+                # Pad to 12 if fewer provided
+                while len(final_sales_trend) < 12:
+                    final_sales_trend.append(final_sales_trend[-1])
+            else:
+                # Derive a realistic S-curve growth trend:
+                # Start at ~60% of current revenue 12 months ago, grow to current
+                growth_pct = max(0.005, (cm_win / 100) * 0.04 + 0.005)  # 0.5%-4.5% monthly growth
+                base = cm_revenue / ((1 + growth_pct) ** 11)
+                final_sales_trend = [
+                    round(base * ((1 + growth_pct) ** i) + random.uniform(-base * 0.03, base * 0.03))
+                    for i in range(12)
+                ]
+            live_revenue = cm_revenue
 
-        # Compute hot_leads from monthly_leads * conversion_rate if CRM has no data
-        if hot_leads == 0 and cm_leads > 0 and cm_cvr > 0:
-            hot_leads = max(1, int(cm_leads * (cm_cvr / 100)))
+        # 2. LEAD DISTRIBUTION: derive from monthly_leads + conversion_rate when CRM is empty
+        crm_has_data = (total_leads > 5)
+        if not crm_has_data and cm_leads > 0:
+            if cm_dist_raw and len(cm_dist_raw) == 3:
+                lead_distribution = [int(v) for v in cm_dist_raw]
+            else:
+                # Hot = leads × (cvr/100), Warm = 2× hot, Cold = remainder
+                cvr_pct = cm_cvr / 100 if cm_cvr > 0 else 0.15
+                hot  = max(1, round(cm_leads * cvr_pct))
+                warm = max(1, round(cm_leads * cvr_pct * 2))
+                cold = max(0, cm_leads - hot - warm)
+                lead_distribution = [hot, warm, cold]
+            # Override KPI card values from real company data
+            hot_leads   = lead_distribution[0]
+            total_leads = cm_leads
 
-        # Use revenue trend from company metrics if provided
-        if cm_trend and len(cm_trend) > 0:
-            final_sales_trend = cm_trend
+        # 3. CHANNEL CLICKS: derive from campaigns and top_channel when history is empty
+        clicks_has_data = any(v > 0 for v in campaign_clicks)
+        if not clicks_has_data:
+            if cm_clicks_raw and len(cm_clicks_raw) == 6:
+                campaign_clicks = [int(v) for v in cm_clicks_raw]
+            elif cm_campaigns > 0 or cm_top_chan:
+                # Allocate clicks across 6 channels based on top channel weighting
+                channel_names = ['LinkedIn', 'Facebook', 'Google Ads', 'Email', 'Twitter/X', 'YouTube']
+                base_per_campaign = max(100, int(cm_deal_size * 0.5)) if cm_deal_size > 0 else 500
+                weights = [0.15, 0.15, 0.20, 0.25, 0.10, 0.15]  # default split
+                top = cm_top_chan.lower()
+                if 'linkedin'  in top: weights = [0.40, 0.10, 0.15, 0.15, 0.10, 0.10]
+                elif 'google'  in top: weights = [0.10, 0.10, 0.45, 0.15, 0.10, 0.10]
+                elif 'email'   in top: weights = [0.10, 0.10, 0.10, 0.50, 0.10, 0.10]
+                elif 'facebook'in top: weights = [0.10, 0.40, 0.15, 0.15, 0.10, 0.10]
+                elif 'twitter' in top or 'x' == top: weights = [0.10, 0.10, 0.15, 0.15, 0.40, 0.10]
+                elif 'youtube' in top: weights = [0.10, 0.10, 0.10, 0.15, 0.10, 0.45]
+                total_clicks = base_per_campaign * max(1, cm_campaigns)
+                campaign_clicks = [
+                    max(10, round(total_clicks * w) + random.randint(-50, 50))
+                    for w in weights
+                ]
 
-        # Override campaign clicks with user-provided values
-        if cm_clicks and len(cm_clicks) == 6:
-            campaign_clicks = [int(v) for v in cm_clicks]
+        # 4. Revenue KPI card override
+        if cm_revenue > 0 and live_revenue == 0:
+            live_revenue = cm_revenue
 
-        # Override lead distribution with user-provided values
-        if cm_dist and len(cm_dist) == 3:
-            lead_distribution = [int(v) for v in cm_dist]
-
-        # Improve accuracy from conversion rate if provided (no jitter for precision)
+        # 5. Accuracy from conversion rate
         if cm_cvr > 0:
             live_accuracy = round(min(99.9, 85 + cm_cvr * 0.15), 1)
 
@@ -804,6 +881,7 @@ def get_dashboard_stats():
             "stocks": updated_stocks
         }
     })
+
 
 
 
@@ -1838,259 +1916,6 @@ def delete_knowledge(doc_id):
     return jsonify({"success": success})
 
 
-# ── v3 Market Analyzer Endpoints ──────────────────────────────────────────────
-
-@app.route("/api/v2/market/summary", methods=["GET"])
-def v2_market_summary():
-    if "user_email" not in session:
-        return jsonify({"error": "Not authenticated"}), 401
-    
-    email = session["user_email"]
-    workspace = database.get_or_create_workspace(email)
-    ws_id = workspace["id"]
-    
-    size = database.get_market_size(ws_id)
-    competitors = database.get_competitor_profiles(ws_id)
-    opportunities = database.get_market_opportunities(ws_id)
-    recommendations = database.get_strategic_recommendations(ws_id)
-    
-    reports = database.get_analysis_reports(email, module="market", limit=1)
-    latest_data = {}
-    if reports:
-        latest_data = reports[0].get("result_dict", {})
-    
-    # Sensible defaults if no analysis has been run yet
-    market_size_data = {
-        "currency": size["currency"] if size else "USD",
-        "tam": size["tam_value"] if size else 0.0,
-        "sam": size["sam_value"] if size else 0.0,
-        "som": size["som_value"] if size else 0.0,
-        "growth_rate_cagr": size["growth_rate_cagr"] if size else 0.0,
-        "source_documentation": size["source_documentation"] if size else ""
-    }
-    
-    return jsonify({
-        "success": True,
-        "workspace": {
-            "id": ws_id,
-            "company_name": workspace["company_name"],
-            "industry": workspace["industry"],
-            "sub_industry": workspace["sub_industry"],
-            "hq_country": workspace["hq_country"],
-            "geo_market": workspace["geo_market"],
-            "business_model": workspace["business_model"],
-            "target_customer": workspace["target_customer"],
-            "founded_year": workspace["founded_year"]
-        },
-        "market_size": market_size_data,
-        "competitors": competitors,
-        "opportunities": opportunities,
-        "recommendations": recommendations,
-        # Merged rich dynamic fields from the latest run:
-        "swot": latest_data.get("swot", {}),
-        "pestel": latest_data.get("pestel", {}),
-        "trends": latest_data.get("trends", []),
-        "radar_data": latest_data.get("radar_data", []),
-        "growth_chart_data": latest_data.get("growth_chart_data", []),
-        "advertising_analysis": latest_data.get("advertising_analysis", []),
-        "positioning_postures": latest_data.get("positioning_postures", [])
-    })
-
-
-@app.route("/api/v2/market/analyze", methods=["POST"])
-def v2_market_analyze():
-    if "user_email" not in session:
-        return jsonify({"error": "Not authenticated"}), 401
-        
-    email = session["user_email"]
-    workspace = database.get_or_create_workspace(email)
-    ws_id = workspace["id"]
-    
-    body = request.get_json() or {}
-    industry = body.get("industry", workspace["industry"] or "Technology")
-    product_category = body.get("product_category", workspace["sub_industry"] or "Software")
-    target_market = body.get("target_market", workspace["geo_market"] or "Global")
-    competitors_raw = body.get("competitors", "")
-    
-    try:
-        from agents import run_market_analysis
-        grounding_context, company_name, company_industry = build_company_context(email, "market")
-        
-        result = run_market_analysis(
-            industry=industry,
-            product_category=product_category,
-            target_market=target_market,
-            competitors_raw=competitors_raw,
-            time_horizon="12 months",
-            grounding_context=grounding_context,
-            company_name=company_name,
-            company_industry=company_industry,
-        )
-        
-        agent_data = result.get("data", {})
-        
-        # Save Sizing to Database Sizing Table (with descriptive amount parser)
-        import re, random
-        def parse_amount(text):
-            if not text: return None
-            text_clean = re.sub(r'[^\d\.\,KkMmBb]', '', str(text))
-            if not text_clean: return None
-            match = re.search(r'([\d\.]+)', text_clean)
-            if not match: return None
-            val = float(match.group(1))
-            if 'b' in text_clean.lower():
-                val *= 1.0e9
-            elif 'm' in text_clean.lower():
-                val *= 1.0e6
-            elif 'k' in text_clean.lower():
-                val *= 1.0e3
-            return val
-
-        size_obj = agent_data.get("market_size", {})
-        tam_val = parse_amount(size_obj.get("current"))
-        if not tam_val or tam_val <= 0:
-            tam_base = 2500000000.0 if ("software" in industry.lower() or "tech" in industry.lower()) else 1000000000.0
-            tam_val = round(tam_base * random.uniform(0.8, 1.5), 2)
-        
-        sam_val = parse_amount(size_obj.get("projected"))
-        if not sam_val or sam_val <= 0:
-            sam_val = round(tam_val * random.uniform(0.3, 0.45), 2)
-            
-        som_val = round(sam_val * random.uniform(0.1, 0.25), 2)
-        
-        cagr_str = size_obj.get("cagr", "")
-        match_cagr = re.search(r'([\d\.]+)', cagr_str)
-        cagr_val = float(match_cagr.group(1)) if match_cagr else round(random.uniform(5.5, 14.5), 2)
-        
-        # Save Sizing
-        database.save_market_size(
-            workspace_id=ws_id,
-            tam_value=tam_val,
-            sam_value=sam_val,
-            som_value=som_val,
-            growth_rate_cagr=cagr_val,
-            source_documentation=size_obj.get("source_documentation", f"Automated AI Sizing Engine via Llama-3-70B based on {industry} and regional data."),
-            currency=size_obj.get("currency", "USD")
-        )
-        
-        # Save Competitors
-        competitors = agent_data.get("competitors", [])
-        if competitors:
-            for idx, c in enumerate(competitors):
-                share = round(random.uniform(5.0, 25.0), 2)
-                threat = c.get("threat_level", "Medium")
-                database.save_competitor_profile(
-                    workspace_id=ws_id,
-                    name=c.get("name"),
-                    market_share_pct=share,
-                    strengths=[c.get("strengths")],
-                    weaknesses=[c.get("weaknesses")],
-                    threat_level=threat,
-                    innovation_score=int(random.uniform(60, 95)),
-                    pricing_score=int(random.uniform(50, 90)),
-                    reach_score=int(random.uniform(40, 85)),
-                    support_score=int(random.uniform(55, 90)),
-                    quality_score=int(random.uniform(65, 95))
-                )
-                
-        # Save Opportunities
-        opps = agent_data.get("opportunities", [])
-        if opps:
-            for o in opps:
-                database.save_market_opportunity(
-                    workspace_id=ws_id,
-                    title=o.get("title", ""),
-                    description=o.get("revenue_potential", o.get("title", "")),
-                    impact_score=int(o.get("score", random.choice([5,6,7,8,9]))),
-                    effort_score=4 if o.get("effort") == "Low" else (6 if o.get("effort") == "Medium" else 8),
-                    estimated_revenue=parse_amount(o.get("revenue_potential")) or 0.0,
-                    target_audience=workspace["target_customer"] or "Target segment",
-                    required_capabilities=[],
-                    status="discovered"
-                )
-                
-        # Archive as structured Analysis Report in history database
-        report_id = database.save_analysis_report(
-            email=email,
-            module="market",
-            title=f"Market Sizing: {industry} — {company_name or email}",
-            input_dict=body,
-            result_dict=agent_data,
-            confidence_score=result.get("confidence_score", 0),
-        )
-        
-        database.log_activity(
-            email=email,
-            activity_type="market_analyzed",
-            title=f"Analyzed {industry} market sizing",
-            metadata={"industry": industry, "report_id": report_id}
-        )
-        
-        return jsonify({
-            "success": True,
-            "message": "Market intelligence analysis completed successfully via LangGraph agent.",
-            "report_id": report_id
-        })
-    except Exception as e:
-        return jsonify({"error": str(e)}), 500
-
-
-@app.route("/api/v2/market/simulate", methods=["POST"])
-def v2_market_simulate():
-    if "user_email" not in session:
-        return jsonify({"error": "Not authenticated"}), 401
-        
-    email = session["user_email"]
-    workspace = database.get_or_create_workspace(email)
-    ws_id = workspace["id"]
-    
-    body = request.get_json() or {}
-    avg_deal_size_modifier = float(body.get("avg_deal_size_modifier", 1.0))
-    sales_cycle_days_modifier = float(body.get("sales_cycle_days_modifier", 1.0))
-    
-    # Fetch SOM value as baseline
-    size = database.get_market_size(ws_id)
-    som = size["som_value"] if size else 5000000.0
-    
-    # Calculate modifiers
-    deal_multiplier = avg_deal_size_modifier
-    cycle_multiplier = 1.0 / sales_cycle_days_modifier if sales_cycle_days_modifier > 0 else 1.0
-    total_multiplier = deal_multiplier * cycle_multiplier
-    
-    # Shift simulated projections
-    baseline_projection = som
-    simulated_projection = round(som * total_multiplier, 2)
-    
-    chart_data = []
-    for m in range(1, 13):
-        m_base = round((som / 12) * m, 2)
-        m_sim = round(m_base * total_multiplier, 2)
-        chart_data.append({
-            "month": f"M{m}",
-            "baseline": m_base,
-            "simulated": m_sim
-        })
-        
-    simulation_output = {
-        "baseline_projection_12m": baseline_projection,
-        "simulated_projection_12m": simulated_projection,
-        "growth_multiplier": round(total_multiplier, 3),
-        "simulation_chart": chart_data
-    }
-    
-    sim_id = database.save_growth_simulation(
-        workspace_id=ws_id,
-        simulation_name=f"Modifier simulation: Deal={avg_deal_size_modifier}x Cycle={sales_cycle_days_modifier}x",
-        input_parameters=body,
-        simulation_output=simulation_output
-    )
-    
-    return jsonify({
-        "success": True,
-        "simulation_id": sim_id,
-        **simulation_output
-    })
-
 
 # ── Share Link Endpoints ──────────────────────────────────────────────────────
 
@@ -2180,6 +2005,18 @@ def compress_context_data(domain, data):
         if isinstance(recs, list):
             compressed["strategic_recommendations"] = [cap_str(r.get("recommendation") if isinstance(r, dict) else r) for r in recs[:3]]
             
+    elif domain == "dashboard":
+        compressed["total_revenue"] = data.get("total_revenue", 0)
+        compressed["total_leads"] = data.get("total_leads", 0)
+        compressed["hot_leads"] = data.get("hot_leads", 0)
+        compressed["avg_lead_score"] = data.get("avg_lead_score", 0)
+        stocks = data.get("stocks", [])
+        if isinstance(stocks, list):
+            compressed["stocks"] = [
+                {"ticker": s.get("ticker"), "price": s.get("price"), "change_pct": s.get("change_pct")}
+                for s in stocks[:5]
+            ]
+            
     return compressed
 
 
@@ -2200,6 +2037,10 @@ def v2_chat():
 
         if not message:
             return jsonify({"error": "Message is required"}), 400
+
+        email = session["user_email"]
+        # Save user message to database
+        db.add_chat_message(email, domain, "user", message)
 
         # Define domain system instructions
         domain_instructions = {
@@ -2232,6 +2073,12 @@ def v2_chat():
                 "and answer questions specifically about business diagnostics, operational challenges, root-cause analyses, "
                 "cost optimizations, and 30/60/90 day action roadmaps.\n"
                 "Refuse politely to answer any questions outside business diagnostics, strategy consult, and operations planning."
+            ),
+            "dashboard": (
+                "You are an expert Executive Advisor and Business Intelligence Analyst. Your goal is to clarify doubts "
+                "and answer questions specifically about the business dashboard metrics, including total sales revenue, "
+                "lead acquisition volume, conversion rates, and stock market tracking.\n"
+                "Refuse politely to answer any questions outside business metrics, dashboard overview, and platform stats."
             )
         }
 
@@ -2279,10 +2126,39 @@ def v2_chat():
             else:
                 raise e
 
+        # Save assistant response to database
+        db.add_chat_message(email, domain, "assistant", res.content)
+
         return jsonify({
             "success": True,
             "response": res.content
         })
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+
+@app.route("/api/v2/chat/history", methods=["GET"])
+def v2_chat_history():
+    if "user_email" not in session:
+        return jsonify({"error": "Not authenticated"}), 401
+    try:
+        email = session["user_email"]
+        domain = request.args.get("domain", "general")
+        history = db.get_chat_history(email, domain)
+        return jsonify({"success": True, "history": history})
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+
+@app.route("/api/v2/chat/history", methods=["DELETE"])
+def v2_chat_clear():
+    if "user_email" not in session:
+        return jsonify({"error": "Not authenticated"}), 401
+    try:
+        email = session["user_email"]
+        domain = request.args.get("domain", "general")
+        db.clear_chat_history(email, domain)
+        return jsonify({"success": True})
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
@@ -2991,6 +2867,63 @@ def v2_poster_image():
     # Fallback: return a JSON error so the frontend can use the direct URL approach instead
     print(f"[Poster Image Proxy] All proxy attempts failed. Client should use direct URL.")
     return jsonify({"error": "Image generation timed out. Loading directly..."}), 504
+
+
+@app.route("/api/v2/logo-maker", methods=["POST"])
+def logo_maker():
+    if "user_email" not in session:
+        return jsonify({"error": "Not authenticated"}), 401
+    email = session["user_email"]
+    
+    data = request.get_json() or {}
+    prompt = data.get("prompt", "").strip()
+    if not prompt:
+        return jsonify({"error": "Prompt is required"}), 400
+        
+    try:
+        import base64
+        import requests as http_requests
+        url = "https://image-api.vengalarohith15119.workers.dev"
+        headers = {
+            "Authorization": "Bearer 123456789",
+            "Content-Type": "application/json"
+        }
+        payload = {"prompt": prompt}
+        resp = http_requests.post(url, json=payload, headers=headers, timeout=60)
+        
+        if resp.status_code == 200:
+            encoded_img = base64.b64encode(resp.content).decode('utf-8')
+            image_data = f"data:image/jpeg;base64,{encoded_img}"
+            database.add_logo_history(email, prompt, image_data)
+            return jsonify({
+                "success": True,
+                "image": image_data
+            })
+        else:
+            return jsonify({
+                "error": f"API returned status {resp.status_code}",
+                "details": resp.text
+            }), resp.status_code
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+
+@app.route("/api/v2/logo-maker/history", methods=["GET"])
+def get_logo_history():
+    if "user_email" not in session:
+        return jsonify({"error": "Not authenticated"}), 401
+    email = session["user_email"]
+    history = database.get_logo_history(email)
+    return jsonify({"success": True, "history": history})
+
+
+@app.route("/api/v2/logo-maker/history/<int:record_id>", methods=["DELETE"])
+def delete_logo_history(record_id):
+    if "user_email" not in session:
+        return jsonify({"error": "Not authenticated"}), 401
+    email = session["user_email"]
+    success = database.delete_logo_history(email, record_id)
+    return jsonify({"success": success})
 
 
 

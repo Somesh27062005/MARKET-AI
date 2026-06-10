@@ -27,10 +27,11 @@ import {
   Bar 
 } from 'recharts';
 import GlassCard from '../components/GlassCard.jsx';
+import ChatAssistant from '../components/ChatAssistant.jsx';
 
 const COLORS = ['#6366f1', '#0ea5e9', '#10b981'];
 
-export default function Dashboard() {
+export default function Dashboard({ getCsrfToken }) {
   const navigate = useNavigate();
   const [stats, setStats] = useState(null);
   const [summary, setSummary] = useState(null);
@@ -88,9 +89,13 @@ export default function Dashboard() {
   ].filter(d => d.value > 0);
 
   const campaignClickData = (statsObj?.campaign_clicks || []).map((val, idx) => ({
-    name: ['Social', 'Search', 'Email', 'Referral', 'Paid Ads', 'Display'][idx] || `Ch${idx + 1}`,
+    name: ['LinkedIn', 'Facebook', 'Google Ads', 'Email', 'Twitter/X', 'YouTube'][idx] || `Ch${idx + 1}`,
     Clicks: val
   }));
+
+  // Derive chart empty-state flags
+  const salesTrendHasData = salesTrendData.some(d => d.Revenue > 0);
+  const channelHasData    = campaignClickData.some(d => d.Clicks > 0);
 
   return (
     <div className="space-y-8 animate-fade-in">
@@ -230,6 +235,17 @@ export default function Dashboard() {
             <TrendingUp className="w-5 h-5 text-indigo-400" />
           </div>
           <div className="h-80 w-full">
+            {!salesTrendHasData ? (
+              <div className="h-full flex flex-col items-center justify-center space-y-3 text-center">
+                <div className="w-12 h-12 rounded-2xl bg-indigo-600/10 border border-indigo-500/10 flex items-center justify-center">
+                  <TrendingUp className="w-6 h-6 text-indigo-400" />
+                </div>
+                <div>
+                  <p className="text-sm font-semibold text-white">No revenue data yet</p>
+                  <p className="text-xs text-gray-500 mt-1 max-w-xs">Add your Monthly Revenue in <button onClick={() => navigate('/profile')} className="text-indigo-400 hover:underline">Settings → Sales & Marketing KPIs</button> to see your trend.</p>
+                </div>
+              </div>
+            ) : (
             <ResponsiveContainer width="100%" height="100%">
               <AreaChart data={salesTrendData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
                 <defs>
@@ -240,7 +256,7 @@ export default function Dashboard() {
                 </defs>
                 <CartesianGrid strokeDasharray="3 3" stroke="rgba(15, 23, 42, 0.06)" />
                 <XAxis dataKey="name" stroke="rgba(15, 23, 42, 0.4)" fontSize={11} />
-                <YAxis stroke="rgba(15, 23, 42, 0.4)" fontSize={11} tickFormatter={(v) => `$${v/1000}k`} />
+                <YAxis stroke="rgba(15, 23, 42, 0.4)" fontSize={11} tickFormatter={(v) => v >= 1000 ? `$${(v/1000).toFixed(0)}k` : `$${v}`} />
                 <Tooltip 
                   contentStyle={{ 
                     background: 'rgba(255, 255, 255, 0.95)', 
@@ -250,10 +266,12 @@ export default function Dashboard() {
                   }}
                   itemStyle={{ color: '#0f172a' }}
                   labelStyle={{ color: '#64748b', fontWeight: 'bold' }}
+                  formatter={(v) => [`$${Number(v).toLocaleString()}`, 'Revenue']}
                 />
                 <Area type="monotone" dataKey="Revenue" stroke="#6366f1" strokeWidth={2} fillOpacity={1} fill="url(#colorRevenue)" />
               </AreaChart>
             </ResponsiveContainer>
+            )}
           </div>
         </GlassCard>
 
@@ -331,6 +349,17 @@ export default function Dashboard() {
             <Users className="w-5 h-5 text-indigo-400" />
           </div>
           <div className="h-64 w-full">
+            {!channelHasData ? (
+              <div className="h-full flex flex-col items-center justify-center space-y-3 text-center">
+                <div className="w-12 h-12 rounded-2xl bg-cyan-600/10 border border-cyan-500/10 flex items-center justify-center">
+                  <Users className="w-6 h-6 text-cyan-400" />
+                </div>
+                <div>
+                  <p className="text-sm font-semibold text-white">No campaign data yet</p>
+                  <p className="text-xs text-gray-500 mt-1 max-w-xs">Set your <button onClick={() => navigate('/profile')} className="text-indigo-400 hover:underline">Top Channel & Active Campaigns</button> in Settings, or run your first campaign.</p>
+                </div>
+              </div>
+            ) : (
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={campaignClickData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
                 <CartesianGrid strokeDasharray="3 3" stroke="rgba(15, 23, 42, 0.06)" />
@@ -349,6 +378,7 @@ export default function Dashboard() {
                 <Bar dataKey="Clicks" fill="#0ea5e9" radius={[4, 4, 0, 0]} />
               </BarChart>
             </ResponsiveContainer>
+            )}
           </div>
         </GlassCard>
 
@@ -384,6 +414,7 @@ export default function Dashboard() {
           </div>
         </GlassCard>
       </div>
+      <ChatAssistant domain="dashboard" contextData={statsObj} getCsrfToken={getCsrfToken} />
     </div>
   );
 }

@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { MessageSquare, Send, X, Sparkles, Loader2 } from 'lucide-react';
+import { MessageSquare, Send, X, Sparkles, Loader2, Trash2 } from 'lucide-react';
 import GlassCard from './GlassCard.jsx';
 
 export default function ChatAssistant({ domain, contextData, getCsrfToken }) {
@@ -35,6 +35,11 @@ export default function ChatAssistant({ domain, contextData, getCsrfToken }) {
       title: 'Strategy Advisory Advisor',
       welcome: "Hello! I'm your Strategic Advisor. Ask me about the 30/60/90 action plan, root cause diagnostics, or cost optimization areas.",
       hints: ['Detail the Day 1-30 plan', 'How to optimize operational costs?', 'What is the root cause diagnosis?']
+    },
+    dashboard: {
+      title: 'MarketMind Advisor',
+      welcome: "Hello! I'm your MarketMind Business Advisor. Ask me anything about your aggregate revenue, qualified leads, active campaigns, or stock market tracking.",
+      hints: ['Analyze sales performance', 'How are our leads distributed?', 'Explain stock price movements']
     }
   };
 
@@ -44,12 +49,53 @@ export default function ChatAssistant({ domain, contextData, getCsrfToken }) {
     hints: ['Summarize the report', 'What are key action items?']
   };
 
-  // Initialize messages on domain load
+  // Load chat history from backend on domain change
+  // NOTE: We intentionally depend only on `domain` — deriving welcome inline
+  // avoids an infinite loop caused by `config` being recreated on every render.
   useEffect(() => {
-    setMessages([
-      { role: 'assistant', content: config.welcome }
-    ]);
+    const welcomeMsg = (domainConfig[domain] || {
+      welcome: 'Hello! I am your business assistant. How can I help you today?'
+    }).welcome;
+
+    const fetchHistory = async () => {
+      try {
+        const res = await fetch(`/api/v2/chat/history?domain=${domain}`);
+        if (res.ok) {
+          const data = await res.json();
+          if (data.success && data.history && data.history.length > 0) {
+            setMessages(data.history);
+          } else {
+            setMessages([{ role: 'assistant', content: welcomeMsg }]);
+          }
+        } else {
+          setMessages([{ role: 'assistant', content: welcomeMsg }]);
+        }
+      } catch (err) {
+        console.error("Failed to load chat history:", err);
+        setMessages([{ role: 'assistant', content: welcomeMsg }]);
+      }
+    };
+
+    fetchHistory();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [domain]);
+
+  const handleClearHistory = async () => {
+    if (!window.confirm("Are you sure you want to clear your chat history for this assistant?")) return;
+    try {
+      const res = await fetch(`/api/v2/chat/history?domain=${domain}`, {
+        method: 'DELETE',
+        headers: {
+          'X-CSRF-Token': getCsrfToken()
+        }
+      });
+      if (res.ok) {
+        setMessages([{ role: 'assistant', content: config.welcome }]);
+      }
+    } catch (err) {
+      console.error("Failed to clear chat history:", err);
+    }
+  };
 
   // Scroll to bottom
   useEffect(() => {
@@ -102,44 +148,58 @@ export default function ChatAssistant({ domain, contextData, getCsrfToken }) {
     if (!text) return '';
     const lines = text.split('\n');
     return lines.map((line, idx) => {
-      let content = line;
-      const isBullet = line.trim().startsWith('- ') || line.trim().startsWith('* ');
+      const trimmed = line.trim();
+      if (!trimmed) return <div key={idx} className="h-2" />;
+
+      // Check for headings
+      const headingMatch = trimmed.match(/^(#{1,6})\s+(.*)$/);
+      if (headingMatch) {
+        const level = headingMatch[1].length;
+        const headingText = parseBoldText(headingMatch[2]);
+        const headingClass = level === 1 ? 'text-lg font-bold my-2 text-current' :
+                             level === 2 ? 'text-base font-bold my-1.5 text-current' :
+                             level === 3 ? 'text-sm font-bold my-1 text-current' :
+                                           'text-xs font-bold my-1 text-current';
+        const Tag = `h${level}`;
+        return <Tag key={idx} className={headingClass}>{headingText}</Tag>;
+      }
+
+      // Check for bullet points
+      const isBullet = trimmed.startsWith('- ') || trimmed.startsWith('* ') || trimmed.startsWith('• ');
       if (isBullet) {
-        content = line.trim().substring(2);
-      }
-
-      // Convert **bold** to strong
-      const boldRegex = /\*\*(.*?)\*\*/g;
-      const parts = [];
-      let lastIndex = 0;
-      let match;
-      while ((match = boldRegex.exec(content)) !== null) {
-        if (match.index > lastIndex) {
-          parts.push(content.substring(lastIndex, match.index));
-        }
-        parts.push(<strong key={match.index} className="font-bold text-current">{match[1]}</strong>);
-        lastIndex = boldRegex.lastIndex;
-      }
-      if (lastIndex < content.length) {
-        parts.push(content.substring(lastIndex));
-      }
-
-      const renderedContent = parts.length > 0 ? parts : content;
-
-      if (isBullet) {
+        const bulletText = parseBoldText(trimmed.replace(/^[-*•]\s+/, ''));
         return (
-          <li key={idx} className="list-disc list-inside ml-2 text-xs my-0.5 text-current">
-            {renderedContent}
+          <li key={idx} className="list-disc list-inside ml-3 text-xs my-0.5 text-current">
+            {bulletText}
           </li>
         );
       }
 
+      // Regular text
       return (
-        <p key={idx} className="text-xs leading-relaxed my-0.5 min-h-[1em] text-current">
-          {renderedContent}
+        <p key={idx} className="text-xs leading-relaxed my-0.5 text-current">
+          {parseBoldText(line)}
         </p>
       );
     });
+  };
+
+  const parseBoldText = (text) => {
+    const boldRegex = /\*\*(.*?)\*\*/g;
+    const parts = [];
+    let lastIndex = 0;
+    let match;
+    while ((match = boldRegex.exec(text)) !== null) {
+      if (match.index > lastIndex) {
+        parts.push(text.substring(lastIndex, match.index));
+      }
+      parts.push(<strong key={match.index} className="font-bold text-current">{match[1]}</strong>);
+      lastIndex = boldRegex.lastIndex;
+    }
+    if (lastIndex < text.length) {
+      parts.push(text.substring(lastIndex));
+    }
+    return parts.length > 0 ? parts : text;
   };
 
   return (
@@ -154,23 +214,36 @@ export default function ChatAssistant({ domain, contextData, getCsrfToken }) {
 
       {/* Expanded Chat Pane */}
       {isOpen && (
-        <div className="fixed bottom-24 right-6 w-96 h-[500px] z-50 rounded-2xl border border-slate-200 glass-panel shadow-2xl flex flex-col overflow-hidden animate-fade-in bg-white/95 backdrop-blur-xl">
+        <div className="chat-panel fixed bottom-24 right-6 w-96 h-[500px] z-50 rounded-2xl border shadow-2xl flex flex-col overflow-hidden animate-fade-in">
           {/* Header */}
-          <div className="flex items-center justify-between p-4 border-b border-slate-100 bg-slate-50/50">
+          <div className="chat-panel-header flex items-center justify-between p-4 border-b">
             <div className="flex items-center space-x-2">
               <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></div>
               <span className="text-sm font-bold text-slate-800 tracking-wide">{config.title}</span>
             </div>
-            <button
-              onClick={() => setIsOpen(false)}
-              className="text-slate-400 hover:text-slate-700 transition-colors cursor-pointer"
-            >
-              <X className="w-4 h-4" />
-            </button>
+            <div className="flex items-center space-x-3">
+              {messages.length > 1 && (
+                <button
+                  type="button"
+                  onClick={handleClearHistory}
+                  title="Clear chat history"
+                  className="text-slate-400 hover:text-red-500 transition-colors cursor-pointer"
+                >
+                  <Trash2 className="w-4 h-4" />
+                </button>
+              )}
+              <button
+                type="button"
+                onClick={() => setIsOpen(false)}
+                className="text-slate-400 hover:text-slate-700 transition-colors cursor-pointer"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
           </div>
 
           {/* Messages */}
-          <div className="flex-1 overflow-y-auto p-4 space-y-4 bg-slate-50/30">
+          <div className="chat-panel-messages flex-1 overflow-y-auto p-4 space-y-4">
             {messages.map((msg, i) => (
               <div
                 key={i}
@@ -200,7 +273,7 @@ export default function ChatAssistant({ domain, contextData, getCsrfToken }) {
 
           {/* Prompt Suggestions */}
           {messages.length === 1 && !loading && (
-            <div className="px-4 pb-2.5 pt-2 flex flex-wrap gap-1.5 bg-slate-50 border-t border-slate-100">
+            <div className="chat-panel-footer px-4 pb-2.5 pt-2 flex flex-wrap gap-1.5 border-t">
               {config.hints.map((hint, idx) => (
                 <button
                   key={idx}
@@ -219,7 +292,7 @@ export default function ChatAssistant({ domain, contextData, getCsrfToken }) {
               e.preventDefault();
               handleSend();
             }}
-            className="p-3 border-t border-slate-100 bg-slate-50 flex items-center space-x-2"
+            className="chat-panel-footer p-3 border-t flex items-center space-x-2"
           >
             <input
               type="text"

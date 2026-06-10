@@ -67,7 +67,7 @@ def market_node(state: MarketState) -> dict:
     )
 
     sys_prompt = f"{co_prefix}You are a Senior Market Intelligence Analyst conducting analysis for {co_name}. Return JSON only."
-    result = invoke_structured(sys_prompt, prompt, schema_hint=MARKET_SCHEMA, retries=2, fast=False, max_tokens=3500)
+    result = invoke_structured(sys_prompt, prompt, schema_hint=MARKET_SCHEMA, retries=2, fast=False, max_tokens=2500)
     return {"result": result}
 
 

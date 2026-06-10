@@ -157,6 +157,34 @@ def build_company_system_prefix(company_name: str = "", industry: str = "",
 
 # ─── JSON Parser ─────────────────────────────────────────────────────────────
 
+def escape_raw_newlines_in_json_strings(json_str: str) -> str:
+    result = []
+    inside_string = False
+    escaped = False
+    
+    for char in json_str:
+        if char == '"' and not escaped:
+            inside_string = not inside_string
+            result.append(char)
+        elif char == '\\' and inside_string:
+            escaped = not escaped
+            result.append(char)
+        else:
+            if inside_string:
+                if char == '\n':
+                    result.append('\\n')
+                elif char == '\r':
+                    result.append('\\r')
+                elif char == '\t':
+                    result.append('\\t')
+                else:
+                    result.append(char)
+            else:
+                result.append(char)
+            escaped = False
+    return "".join(result)
+
+
 def parse_json_block(text: str) -> dict:
     """
     Extract and parse the first JSON object/array found in an LLM response.
@@ -180,6 +208,7 @@ def parse_json_block(text: str) -> dict:
             depth -= 1
             if depth == 0:
                  candidate = text[brace_start: i + 1]
+                 candidate = escape_raw_newlines_in_json_strings(candidate)
                  # Repair unquoted percentages (e.g. 60%) and currency strings (e.g. INR 40,000)
                  candidate = re.sub(r':\s*([0-9.]+\s*%)', r': "\1"', candidate)
                  candidate = re.sub(
@@ -220,7 +249,7 @@ def invoke_structured(system_prompt: str, user_prompt: str,
     full_system = system_prompt
     if schema_hint:
         full_system += f"\n\nRespond ONLY with valid JSON matching this schema:\n{schema_hint}"
-    full_system += "\n\nIMPORTANT: Return ONLY the JSON object. No explanation, no markdown, no extra text."
+    full_system += "\n\nIMPORTANT: Return ONLY the JSON object. No explanation, no markdown, no extra text. Do NOT include raw newlines inside JSON string values; if you need a line break, use the escaped sequence '\\n'."
 
     messages = [
         SystemMessage(content=full_system),
@@ -521,23 +550,51 @@ def get_campaign_fallback(product, audience, platform, budget, goals, company_na
     platform_mapping_fallbacks = {
         "linkedin": {
             "platform": "LinkedIn",
-            "copy": f"Is your team bogged down by manual workflows? 📉 With {company_name}'s {product}, you can automate operations, reduce manual errors, and scale efficiency seamlessly. Read our latest insights to see how we help leaders achieve high-impact business outcomes. #Efficiency #Operations #B2B"
+            "copy": (
+                f"Are you looking to eliminate operational bottlenecks? 📈\n\n"
+                f"With {company_name}'s latest product ({product}), B2B operations teams are achieving "
+                f"unprecedented efficiency. Here is how we help you scale:\n"
+                f"• Automate repetitive manual workflows\n"
+                f"• Reduce department errors by up to 40%\n"
+                f"• Track metrics in real-time on a secure dashboard\n\n"
+                f"Read our latest playbook to optimize your department's efficiency: [Link]\n\n"
+                f"#Operations #B2B #Automation #WorkforceEfficiency"
+            )
         },
         "twitter": {
             "platform": "Twitter/X",
-            "copy": f"Stop letting manual processes stall your growth. 🚀 {product} by {company_name} deploys in days, not months, delivering real-time operations tracking with robust security. Get your custom briefing: [Link] #WorkforceEfficiency #TechSolutions"
+            "copy": (
+                f"Stop letting manual processes stall your growth. 🚀\n\n"
+                f"{product} by {company_name} deploys in days, delivering real-time operations "
+                f"tracking with robust security. Get your custom briefing: [Link]\n\n"
+                f"#Efficiency #TechSolutions #B2B"
+            )
         },
         "x": {
             "platform": "Twitter/X",
-            "copy": f"Stop letting manual processes stall your growth. 🚀 {product} by {company_name} deploys in days, not months, delivering real-time operations tracking with robust security. Get your custom briefing: [Link] #WorkforceEfficiency #TechSolutions"
+            "copy": (
+                f"Stop letting manual processes stall your growth. 🚀\n\n"
+                f"{product} by {company_name} deploys in days, delivering real-time operations "
+                f"tracking with robust security. Get your custom briefing: [Link]\n\n"
+                f"#Efficiency #TechSolutions #B2B"
+            )
         },
         "facebook": {
             "platform": "Facebook",
-            "copy": f"Accelerate your team's output. {company_name} introduces {product}, a comprehensive operational system built to eliminate manual bottlenecks, secure business logic, and drive high-impact outcomes. Learn how we can help your team scale: [Link] #BusinessTech #Operations"
+            "copy": (
+                f"Accelerate your team's output! ⚡\n\n"
+                f"{company_name} introduces {product}, a comprehensive operational system built to "
+                f"eliminate manual bottlenecks, secure business logic, and drive high-impact outcomes. Learn how we can "
+                f"help your department scale operations seamlessly: [Link]\n\n"
+                f"#BusinessTech #Operations #WorkflowAutomation"
+            )
         },
         "whatsapp": {
             "platform": "WhatsApp",
-            "copy": f"Hello! 👋 Discover how {company_name} helps you scale operations with {product}. Contact us to learn more! [Link]"
+            "copy": (
+                f"Hello! 👋 Discover how {company_name} helps you scale operations and optimize workflows with "
+                f"{product}. Contact us to learn more or get a custom demo! [Link]"
+            )
         },
         "google": {
             "platform": "Google Search",
@@ -1456,47 +1513,37 @@ def get_insights_fallback(business_type, challenges, goals, company_name) -> dic
         "plan_30_day": [
             {
                 "action": "CRM and process tracking setup",
-                "description": f"Configure rules based on budget and buyer authority to filter inbound {business_type} leads.",
                 "owner": "Marketing Operations Lead",
-                "success_metric": "Reduce lead review time by 50%",
-                "tools": ["CRM", "Zapier", "Spreadsheets"],
-                "kpi": "Under 5 minutes review time"
+                "success_metric": "Reduce lead review time by 50%"
             },
             {
                 "action": "Objection handling script library publication",
-                "description": "Standardize responses to pricing, implementation, and legacy objections.",
                 "owner": "Sales Enablement Director",
-                "success_metric": "Win rate improvement of 5%",
-                "tools": ["Central Docs", "Notion"],
-                "kpi": "100% rep certification rate"
+                "success_metric": "Win rate improvement of 5%"
             }
         ],
         "plan_60_day": [
             {
                 "action": "Targeted case study publication",
-                "description": "Write and design two success stories highlighting time-savings ROI.",
                 "owner": "Content Marketing Manager",
-                "success_metric": "Generate 40+ downloads from marketing campaigns",
-                "tools": ["Design Tools", "Email Marketing", "Social Media"],
-                "kpi": "45 downloads"
+                "success_metric": "Generate 40+ downloads from marketing campaigns"
             },
             {
                 "action": "Lead response time SLA tracking",
-                "description": "Implement automated notifications for sales reps on inbound leads.",
                 "owner": "Sales Operations Lead",
-                "success_metric": "Average response time under 15 minutes",
-                "tools": ["Messaging Tools", "Calendly", "CRM Alerting"],
-                "kpi": "12 minutes response average"
+                "success_metric": "Average response time under 15 minutes"
             }
         ],
         "plan_90_day": [
             {
                 "action": f"Launch interactive sandbox/demo or sample kit for {business_type}",
-                "description": "Create a hands-on preview, interactive sandbox, or sample kit for prospects to experience the product quality directly.",
                 "owner": "Product Lead / CTO Office",
-                "success_metric": "Conversion from sandbox to demo booking > 15%",
-                "tools": ["Custom Portal", "Auth0", "Stripe"],
-                "kpi": "18% booking conversion"
+                "success_metric": "Conversion from sandbox to demo booking > 15%"
+            },
+            {
+                "action": "Enterprise sales channel scale-up",
+                "owner": "VP of Business Development",
+                "success_metric": "Onboard at least 3 active channel partners"
             }
         ],
         "kpi_targets": [

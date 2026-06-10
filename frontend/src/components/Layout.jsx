@@ -8,7 +8,6 @@ import {
   TrendingUp, 
   Lightbulb, 
   Briefcase, 
-  Layers, 
   Database, 
   Settings, 
   LogOut, 
@@ -16,11 +15,29 @@ import {
   Globe, 
   Flame,
   ArrowUpRight,
-  ArrowDownRight
+  ArrowDownRight,
+  Sun,
+  Moon,
+  Palette
 } from 'lucide-react';
 
 export default function Layout({ children, user, onLogout }) {
   const navigate = useNavigate();
+  const [theme, setTheme] = useState(() => {
+    return localStorage.getItem('theme') || 'light';
+  });
+
+  useEffect(() => {
+    const root = window.document.documentElement;
+    if (theme === 'dark') {
+      root.classList.add('dark');
+      root.classList.remove('light');
+    } else {
+      root.classList.add('light');
+      root.classList.remove('dark');
+    }
+    localStorage.setItem('theme', theme);
+  }, [theme]);
   const location = useLocation();
   const [stockPrices, setStockPrices] = useState([]);
   const [showProfileMenu, setShowProfileMenu] = useState(false);
@@ -35,8 +52,8 @@ export default function Layout({ children, user, onLogout }) {
     { name: 'Market Analysis', path: '/market', icon: TrendingUp },
     { name: 'Business Insights', path: '/insights', icon: Lightbulb },
     { name: 'CRM Pipeline', path: '/crm', icon: Briefcase },
-    { name: 'Enterprise Analyzer', path: '/workspace', icon: Layers },
     { name: 'Knowledge Base', path: '/knowledge', icon: Database },
+    { name: 'Logo Maker AI', path: '/logo-maker', icon: Palette },
     { name: 'Profile & KPIs', path: '/profile', icon: Settings },
   ];
 
@@ -123,8 +140,12 @@ export default function Layout({ children, user, onLogout }) {
         {/* Sidebar Footer User Info */}
         <div className="py-4 px-0 group-hover:px-6 border-t border-white/5 bg-surface-900/40 flex items-center justify-center group-hover:justify-between rounded-b-[2rem] transition-all duration-300 shrink-0">
           <div className="flex items-center justify-center group-hover:justify-start w-12 group-hover:w-auto">
-            <div className="w-10 h-10 rounded-full bg-indigo-600/30 border border-indigo-500/20 flex items-center justify-center font-display font-semibold text-indigo-400 shrink-0">
-              {user.avatar || user.name?.[0]?.toUpperCase() || 'U'}
+            <div className="w-10 h-10 rounded-full bg-indigo-600/30 border border-indigo-500/20 flex items-center justify-center font-display font-semibold text-indigo-400 shrink-0 overflow-hidden">
+              {user.avatar && (user.avatar.startsWith('http') || user.avatar.includes('/')) ? (
+                <img src={user.avatar} className="w-full h-full object-cover" referrerPolicy="no-referrer" alt="" />
+              ) : (
+                user.avatar || user.name?.[0]?.toUpperCase() || 'U'
+              )}
             </div>
             <div className="opacity-0 w-0 scale-95 group-hover:opacity-100 group-hover:w-32 group-hover:scale-100 transition-all duration-300 group-hover:ml-3 ml-0 overflow-hidden whitespace-nowrap flex flex-col justify-center">
               <p className="text-sm font-medium text-white truncate leading-tight">{user.name}</p>
@@ -154,9 +175,9 @@ export default function Layout({ children, user, onLogout }) {
 
             {/* Live Ticker */}
             <div className="flex-1 overflow-hidden relative select-none max-w-lg">
-              {/* Fade masks on edges for premium aesthetics */}
-              <div className="absolute left-0 top-0 bottom-0 w-6 bg-gradient-to-r from-slate-100/80 to-transparent z-10 pointer-events-none"></div>
-              <div className="absolute right-0 top-0 bottom-0 w-6 bg-gradient-to-l from-slate-100/80 to-transparent z-10 pointer-events-none"></div>
+              {/* Fade masks on edges — uses CSS surface variable so it matches both light & dark themes */}
+              <div className="absolute left-0 top-0 bottom-0 w-6 bg-gradient-to-r from-surface-800 to-transparent z-10 pointer-events-none"></div>
+              <div className="absolute right-0 top-0 bottom-0 w-6 bg-gradient-to-l from-surface-800 to-transparent z-10 pointer-events-none"></div>
               
               <div className="flex items-center space-x-6 py-1 text-xs whitespace-nowrap w-max animate-marquee hover:[animation-play-state:paused]">
                 {/* We map twice to ensure seamless infinite looping */}
@@ -179,6 +200,19 @@ export default function Layout({ children, user, onLogout }) {
 
           {/* Right Header Operations */}
           <div className="flex items-center space-x-4 shrink-0 relative">
+            {/* Theme Toggle Button */}
+            <button
+              onClick={() => setTheme(theme === 'light' ? 'dark' : 'light')}
+              className="p-2.5 rounded-xl hover:bg-white/5 transition-all text-gray-400 hover:text-white flex items-center justify-center cursor-pointer border border-white/5 hover:border-white/10"
+              title={theme === 'light' ? 'Switch to Dark Mode' : 'Switch to Light Mode'}
+            >
+              {theme === 'light' ? (
+                <Moon className="w-4 h-4 text-indigo-400" />
+              ) : (
+                <Sun className="w-4 h-4 text-yellow-400" />
+              )}
+            </button>
+
             {/* Profile Dropdown */}
             <div className="relative">
               <button 
@@ -187,8 +221,12 @@ export default function Layout({ children, user, onLogout }) {
                 }}
                 className="flex items-center space-x-2 p-1.5 rounded-xl hover:bg-white/5 transition-all text-gray-400 hover:text-white"
               >
-                <div className="w-8 h-8 rounded-lg bg-indigo-600/20 flex items-center justify-center font-display font-semibold text-indigo-400">
-                  {user.avatar || user.name?.[0]?.toUpperCase()}
+                <div className="w-8 h-8 rounded-lg bg-indigo-600/20 flex items-center justify-center font-display font-semibold text-indigo-400 overflow-hidden">
+                  {user.avatar && (user.avatar.startsWith('http') || user.avatar.includes('/')) ? (
+                    <img src={user.avatar} className="w-full h-full object-cover" referrerPolicy="no-referrer" alt="" />
+                  ) : (
+                    user.avatar || user.name?.[0]?.toUpperCase()
+                  )}
                 </div>
                 <ChevronDown className="w-4 h-4" />
               </button>
