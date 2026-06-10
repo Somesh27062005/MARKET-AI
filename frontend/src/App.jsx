@@ -77,13 +77,13 @@ export default function App() {
           <Route path="/dashboard" element={<Dashboard getCsrfToken={getCsrfToken} />} />
           <Route path="/campaigns" element={<CampaignGenerator getCsrfToken={getCsrfToken} />} />
           <Route path="/pitch" element={<SalesPitchCreator getCsrfToken={getCsrfToken} />} />
+          <Route path="/logo-maker" element={<LogoMaker getCsrfToken={getCsrfToken} />} />
           <Route path="/leads" element={<LeadScoring getCsrfToken={getCsrfToken} />} />
           <Route path="/market" element={<MarketAnalysis getCsrfToken={getCsrfToken} />} />
           <Route path="/insights" element={<BusinessInsights getCsrfToken={getCsrfToken} />} />
           <Route path="/crm" element={<CRM getCsrfToken={getCsrfToken} />} />
           <Route path="/knowledge" element={<KnowledgeBase getCsrfToken={getCsrfToken} />} />
           <Route path="/profile" element={<Profile user={user} setUser={setUser} getCsrfToken={getCsrfToken} />} />
-          <Route path="/logo-maker" element={<LogoMaker getCsrfToken={getCsrfToken} />} />
           <Route path="*" element={<Navigate to="/dashboard" replace />} />
         </Routes>
       </Layout>

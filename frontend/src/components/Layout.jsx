@@ -48,12 +48,12 @@ export default function Layout({ children, user, onLogout }) {
     { name: 'Dashboard', path: '/dashboard', icon: LayoutDashboard },
     { name: 'Campaign Generator', path: '/campaigns', icon: Send },
     { name: 'Sales Pitch Creator', path: '/pitch', icon: FileText },
+    { name: 'Logo Maker AI', path: '/logo-maker', icon: Palette },
     { name: 'Lead Scoring', path: '/leads', icon: UserCheck },
     { name: 'Market Analysis', path: '/market', icon: TrendingUp },
     { name: 'Business Insights', path: '/insights', icon: Lightbulb },
     { name: 'CRM Pipeline', path: '/crm', icon: Briefcase },
     { name: 'Knowledge Base', path: '/knowledge', icon: Database },
-    { name: 'Logo Maker AI', path: '/logo-maker', icon: Palette },
     { name: 'Profile & KPIs', path: '/profile', icon: Settings },
   ];
 
