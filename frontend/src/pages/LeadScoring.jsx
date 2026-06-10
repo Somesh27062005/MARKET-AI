@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { useLocation } from 'react-router-dom';
 import { 
   UserCheck, 
   Sparkles, 
@@ -35,6 +36,51 @@ export default function LeadScoring({ getCsrfToken }) {
   const [error, setError] = useState('');
   const [crmStatus, setCrmStatus] = useState('');
   const [suggesting, setSuggesting] = useState(false);
+  const location = useLocation();
+
+  useEffect(() => {
+    if (location.state?.loadReportId) {
+      const reportId = location.state.loadReportId;
+      window.history.replaceState({}, document.title);
+      
+      const loadReport = async () => {
+        setLoading(true);
+        setError('');
+        try {
+          const res = await fetch(`/api/v2/reports/${reportId}`);
+          if (res.ok) {
+            const data = await res.json();
+            if (data.success && data.report) {
+              const r = data.report;
+              if (r.input_dict) {
+                if (r.input_dict.name !== undefined) setName(r.input_dict.name || '');
+                if (r.input_dict.company !== undefined) setCompany(r.input_dict.company || '');
+                if (r.input_dict.industry !== undefined) setIndustry(r.input_dict.industry || '');
+                if (r.input_dict.company_size !== undefined) setCompanySize(r.input_dict.company_size || r.input_dict.companySize || '');
+                if (r.input_dict.decision_role !== undefined) setDecisionRole(r.input_dict.decision_role || r.input_dict.decisionRole || '');
+                if (r.input_dict.budget !== undefined) setBudget(r.input_dict.budget || '');
+                if (r.input_dict.need !== undefined) setNeed(r.input_dict.need || '');
+                if (r.input_dict.urgency !== undefined) setUrgency(r.input_dict.urgency || '');
+              }
+              if (r.result_dict) {
+                setResult(r.result_dict);
+              }
+            } else {
+              setError(data.error || 'Failed to load report.');
+            }
+          } else {
+            setError('Failed to fetch report from server.');
+          }
+        } catch (err) {
+          console.error(err);
+          setError('Error loading report.');
+        } finally {
+          setLoading(false);
+        }
+      };
+      loadReport();
+    }
+  }, [location.state]);
 
   const handleSuggestInputs = async () => {
     setSuggesting(true);

@@ -73,6 +73,38 @@ export default function Layout({ children, user, onLogout }) {
     return () => clearInterval(interval);
   }, []);
 
+  const handleActivityClick = (act) => {
+    const reportId = act.metadata?.report_id;
+    if (!reportId) return;
+
+    setShowNotifications(false);
+
+    let path = '';
+    switch (act.activity_type) {
+      case 'campaign_generated':
+        path = '/campaigns';
+        break;
+      case 'pitch_created':
+        path = '/pitch';
+        break;
+      case 'lead_scored':
+        path = '/leads';
+        break;
+      case 'market_analyzed':
+        path = '/market';
+        break;
+      case 'insight_generated':
+        path = '/insights';
+        break;
+      default:
+        return;
+    }
+
+    if (path) {
+      navigate(path, { state: { loadReportId: reportId } });
+    }
+  };
+
   const handleLogoutClick = async () => {
     try {
       const res = await fetch('/api/auth/logout', { method: 'POST' });
@@ -207,22 +239,35 @@ export default function Layout({ children, user, onLogout }) {
               {showNotifications && (
                 <div className="absolute right-0 mt-3 w-80 bg-white border border-slate-200/80 rounded-2xl p-4 shadow-xl z-30">
                   <div className="flex items-center justify-between border-b border-slate-100 pb-2 mb-3">
-                    <h3 className="text-sm font-semibold text-white">Recent Activity Log</h3>
+                    <h3 className="text-sm font-semibold text-slate-800">Recent Activity Log</h3>
                     <span className="text-xs text-indigo-400 font-medium">Auto-updated</span>
                   </div>
                   <div className="space-y-3 max-h-64 overflow-y-auto custom-scrollbar pr-1">
                     {activities.length === 0 ? (
                       <p className="text-xs text-gray-500 text-center py-4">No recent activity detected.</p>
                     ) : (
-                      activities.map((act) => (
-                        <div key={act.id} className="text-xs border-b border-slate-100 pb-2 last:border-0 last:pb-0">
-                          <p className="text-white font-medium">{act.title}</p>
-                          <div className="flex items-center justify-between text-[10px] text-gray-500 mt-1">
-                            <span className="bg-slate-100 px-1.5 py-0.5 rounded text-indigo-400 uppercase tracking-wider font-semibold">{act.activity_type}</span>
-                            <span>{new Date(act.created_at).toLocaleTimeString()}</span>
+                      activities.map((act) => {
+                        const hasReport = !!act.metadata?.report_id;
+                        return (
+                          <div 
+                            key={act.id} 
+                            onClick={() => hasReport && handleActivityClick(act)}
+                            className={`text-xs border-b border-slate-100 pb-2 last:border-0 last:pb-0 ${
+                              hasReport 
+                                ? 'cursor-pointer hover:bg-slate-50 hover:text-indigo-600 p-1.5 rounded-xl transition-all' 
+                                : 'p-1.5'
+                            }`}
+                          >
+                            <p className="text-slate-800 font-medium leading-normal hover:text-indigo-600 transition-colors">{act.title}</p>
+                            <div className="flex items-center justify-between text-[10px] text-gray-500 mt-1">
+                              <span className="bg-indigo-50 px-1.5 py-0.5 rounded text-indigo-600 uppercase tracking-wider font-semibold">
+                                {act.activity_type?.replace('_', ' ')}
+                              </span>
+                              <span>{new Date(act.created_at).toLocaleTimeString()}</span>
+                            </div>
                           </div>
-                        </div>
-                      ))
+                        );
+                      })
                     )}
                   </div>
                 </div>

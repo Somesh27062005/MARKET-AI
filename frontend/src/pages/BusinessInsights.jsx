@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { useLocation } from 'react-router-dom';
 import { 
   Lightbulb, 
   Sparkles, 
@@ -28,6 +29,48 @@ export default function BusinessInsights({ getCsrfToken }) {
   const [activeTab, setActiveTab] = useState('diagnostic');
   const [error, setError] = useState('');
   const [suggesting, setSuggesting] = useState(false);
+  const location = useLocation();
+
+  useEffect(() => {
+    if (location.state?.loadReportId) {
+      const reportId = location.state.loadReportId;
+      window.history.replaceState({}, document.title);
+      
+      const loadReport = async () => {
+        setLoading(true);
+        setError('');
+        try {
+          const res = await fetch(`/api/v2/reports/${reportId}`);
+          if (res.ok) {
+            const data = await res.json();
+            if (data.success && data.report) {
+              const r = data.report;
+              if (r.input_dict) {
+                if (r.input_dict.business_type !== undefined) setBusinessType(r.input_dict.business_type || r.input_dict.businessType || '');
+                if (r.input_dict.challenges !== undefined) setChallenges(r.input_dict.challenges || '');
+                if (r.input_dict.goals !== undefined) setGoals(r.input_dict.goals || '');
+                if (r.input_dict.target_audience !== undefined) setTargetAudience(r.input_dict.target_audience || r.input_dict.targetAudience || '');
+                if (r.input_dict.industry_context !== undefined) setIndustryContext(r.input_dict.industry_context || r.input_dict.industryContext || '');
+              }
+              if (r.result_dict) {
+                setResult(r.result_dict);
+              }
+            } else {
+              setError(data.error || 'Failed to load report.');
+            }
+          } else {
+            setError('Failed to fetch report from server.');
+          }
+        } catch (err) {
+          console.error(err);
+          setError('Error loading report.');
+        } finally {
+          setLoading(false);
+        }
+      };
+      loadReport();
+    }
+  }, [location.state]);
 
   const handleSuggestInputs = async () => {
     setSuggesting(true);

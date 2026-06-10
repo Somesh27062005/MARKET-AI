@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { useLocation } from 'react-router-dom';
 import { 
   FileText, 
   Sparkles, 
@@ -26,6 +27,48 @@ export default function SalesPitchCreator({ getCsrfToken }) {
   const [activeTab, setActiveTab] = useState('pitch');
   const [error, setError] = useState('');
   const [suggesting, setSuggesting] = useState(false);
+  const location = useLocation();
+
+  useEffect(() => {
+    if (location.state?.loadReportId) {
+      const reportId = location.state.loadReportId;
+      window.history.replaceState({}, document.title);
+      
+      const loadReport = async () => {
+        setLoading(true);
+        setError('');
+        try {
+          const res = await fetch(`/api/v2/reports/${reportId}`);
+          if (res.ok) {
+            const data = await res.json();
+            if (data.success && data.report) {
+              const r = data.report;
+              if (r.input_dict) {
+                if (r.input_dict.product !== undefined) setProduct(r.input_dict.product || '');
+                if (r.input_dict.customer !== undefined) setCustomer(r.input_dict.customer || '');
+                if (r.input_dict.target_role !== undefined) setTargetRole(r.input_dict.target_role || r.input_dict.targetRole || '');
+                if (r.input_dict.usp !== undefined) setUsp(r.input_dict.usp || '');
+                if (r.input_dict.pain_points !== undefined) setPainPoints(r.input_dict.pain_points || r.input_dict.painPoints || '');
+              }
+              if (r.result_dict) {
+                setResult(r.result_dict);
+              }
+            } else {
+              setError(data.error || 'Failed to load report.');
+            }
+          } else {
+            setError('Failed to fetch report from server.');
+          }
+        } catch (err) {
+          console.error(err);
+          setError('Error loading report.');
+        } finally {
+          setLoading(false);
+        }
+      };
+      loadReport();
+    }
+  }, [location.state]);
 
   const handleSuggestInputs = async () => {
     setSuggesting(true);
@@ -307,8 +350,8 @@ export default function SalesPitchCreator({ getCsrfToken }) {
               <div className="flex border-b border-white/5 text-sm">
                 {[
                   { id: 'pitch', label: 'Pitch & Value', icon: Sparkles },
-                  { id: 'objections', label: 'Objection Handler', icon: ShieldAlert },
                   { id: 'questions', label: 'Discovery Call', icon: MessageSquare },
+                  { id: 'objections', label: 'Objection Handler', icon: ShieldAlert },
                   { id: 'collateral', label: 'Collateral scripts', icon: ClipboardList },
                   { id: 'outreach', label: 'Outreach templates', icon: Mail }
                 ].map((tab) => {
@@ -365,24 +408,7 @@ export default function SalesPitchCreator({ getCsrfToken }) {
                   </GlassCard>
                 )}
 
-                {/* 2. OBJECTIONS */}
-                {activeTab === 'objections' && (
-                  <div className="space-y-4">
-                    {(Array.isArray(result.objection_handling) ? result.objection_handling : []).map((item, idx) => (
-                      <GlassCard key={idx} className="border border-white/5">
-                        <div className="flex items-center space-x-2 text-rose-400 font-semibold text-xs uppercase tracking-wider mb-2">
-                          <ShieldAlert className="w-4 h-4" />
-                          <span>Objection: {item.objection}</span>
-                        </div>
-                        <div className="bg-white/2 p-3 rounded-xl border border-white/5 text-xs text-gray-300 leading-relaxed">
-                          <strong>Strategic Response:</strong> {item.response}
-                        </div>
-                      </GlassCard>
-                    ))}
-                  </div>
-                )}
-
-                {/* 3. DISCOVERY CALL */}
+                {/* 2. DISCOVERY CALL */}
                 {activeTab === 'questions' && (
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     {/* Discovery Questions */}
@@ -415,6 +441,23 @@ export default function SalesPitchCreator({ getCsrfToken }) {
                         ))}
                       </div>
                     </GlassCard>
+                  </div>
+                )}
+
+                {/* 3. OBJECTIONS */}
+                {activeTab === 'objections' && (
+                  <div className="space-y-4">
+                    {(Array.isArray(result.objection_handling) ? result.objection_handling : []).map((item, idx) => (
+                      <GlassCard key={idx} className="border border-white/5">
+                        <div className="flex items-center space-x-2 text-rose-400 font-semibold text-xs uppercase tracking-wider mb-2">
+                          <ShieldAlert className="w-4 h-4" />
+                          <span>Objection: {item.objection}</span>
+                        </div>
+                        <div className="bg-white/2 p-3 rounded-xl border border-white/5 text-xs text-gray-300 leading-relaxed">
+                          <strong>Strategic Response:</strong> {item.response}
+                        </div>
+                      </GlassCard>
+                    ))}
                   </div>
                 )}
 
