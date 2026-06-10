@@ -48,15 +48,17 @@ def campaign_node(state: CampaignState) -> dict:
         f"You are a premium, elite marketing strategist. Generate a highly tailored marketing campaign strategy for {co_name}'s product.\n"
         f"Fill in every field of the schema with high-quality, specific, and realistic content. Keep descriptions and context blocks professional but concise (1-2 sentences per item) to respect token budgets.\n\n"
         f"Follow these guidelines for each schema field:\n"
-        f"1. campaign_name: A strategic, high-impact campaign name.\n"
-        f"2. executive_campaign_overview: A concise 50-70 word executive summary explaining the growth opportunity and strategic objective.\n"
-        f"3. strategic_goals: Provide exactly 3 distinct strategic goals. For each, specify `goal_name` and `business_context` (a short 1-sentence explanation of why it matters).\n"
-        f"4. persona_profile: A simplified persona profile matching target demographics. Provide a short description of `business_challenges`, list 3 specific `pain_points`, and list 3 specific `buying_motivations`.\n"
-        f"5. funnel: Map out the 3 stages: `awareness`, `consideration`, and `conversion`. For each, provide a list of specific `tactics` (e.g. blog post, demo), a list of `kpis` (e.g. views, signups), and a `budget_pct` integer.\n"
-        f"6. budget_allocation: Allocate percentages (totaling 100) across 2-3 marketing channels. Provide `channel` name, integer `percent`, and a brief 1-sentence `rationale`.\n"
-        f"7. kpis: Provide at least 3 campaign-level KPIs. For each, specify `metric` name, realistic target value/percentage (`target`), and how it is measured (`measurement`).\n"
-        f"8. content_ideas, ad_copies, social_media_posts: Generate creative elements ONLY for the platforms specified in the selected list: {platform}. Do not generate content for any other platforms. Provide at least one content idea, ad copy, and social media post copy for each selected platform.\n"
-        f"9. calendar: Provide a week-by-week timeline (weeks 1 to 4). For each week, provide a `theme` and a list of 2-3 specific action `tasks`.\n\n"
+        f"1. campaign_name: A strategic, high-impact campaign name (2-4 words).\n"
+        f"2. executive_campaign_overview: A concise 40-50 word executive summary explaining the growth opportunity and strategic objective.\n"
+        f"3. strategic_goals: Provide exactly 3 distinct strategic goals. For each, specify `goal_name` (2-4 words) and `business_context` (a short 1-sentence explanation of 10-15 words).\n"
+        f"4. persona_profile: Provide a short description of `business_challenges` (15-20 words), exactly 3 `pain_points` (4-8 words each), and exactly 3 `buying_motivations` (4-8 words each).\n"
+        f"5. funnel: Map out the 3 stages: `awareness`, `consideration`, and `conversion`. For each, provide exactly 2 specific `tactics` (3-6 words each), exactly 2 `kpis` (2-4 words each), and `budget_pct` integer.\n"
+        f"6. budget_allocation: Allocate percentages (totaling 100) across exactly 2-3 marketing channels. Provide `channel` name (2-3 words), integer `percent`, and a brief 1-sentence `rationale` (10-15 words).\n"
+        f"7. kpis: Provide exactly 3 campaign-level KPIs. For each, specify `metric` name (2-4 words), realistic target value/percentage (`target`), and `measurement` method (8-12 words).\n"
+        f"8. content_ideas: Generate exactly 1 content idea for each of the selected platforms: {platform}. Specify `title` (3-6 words), `format` (2-3 words), `platform` (name), and `description` (12-20 words).\n"
+        f"9. ad_copies: Generate exactly 1 ad copy variation for each of the selected platforms: {platform}. Specify `platform`, `headline` (4-8 words), `body` (15-25 words), and `cta` (2-4 words).\n"
+        f"10. social_media_posts: Generate exactly 1 social post for each of the selected platforms: {platform}. Specify `platform` and `copy` (15-25 words).\n"
+        f"11. calendar: Provide a week-by-week timeline for exactly 4 weeks (weeks 1 to 4). Specify `week` (integer), `theme` (3-5 words), and exactly 2 specific action `tasks` (4-8 words each).\n\n"
         f"{grounding}"
     )
 
@@ -69,6 +71,56 @@ def metrics_node(state: CampaignState) -> dict:
     co_name = state.get('company_name', '') or state['product']
     result.setdefault("campaign_name", f"{co_name} Growth Campaign")
     result.setdefault("objectives", ["Increase brand awareness", "Drive qualified leads"])
+    
+    # Defensive key initialization
+    if "funnel" not in result or not isinstance(result["funnel"], dict):
+        result["funnel"] = {
+            "awareness": {
+                "tactics": ["LinkedIn Sponsored Content", "Google Search Ads"],
+                "kpis": ["CTR", "Impressions"],
+                "budget_pct": 35
+            },
+            "consideration": {
+                "tactics": ["Product Whitepaper", "Expert Webinar"],
+                "kpis": ["Downloads", "Registrants"],
+                "budget_pct": 40
+            },
+            "conversion": {
+                "tactics": ["Free Sandbox Demo", "1-on-1 Consultation"],
+                "kpis": ["Demos Booked", "Conversion Rate"],
+                "budget_pct": 25
+            }
+        }
+    else:
+        for stage in ["awareness", "consideration", "conversion"]:
+            if stage not in result["funnel"] or not isinstance(result["funnel"][stage], dict):
+                result["funnel"][stage] = {"tactics": ["Paid Search / Social"], "kpis": ["Clicks"], "budget_pct": 33}
+            else:
+                s_data = result["funnel"][stage]
+                s_data.setdefault("tactics", ["Paid Search / Social"])
+                s_data.setdefault("kpis", ["Clicks"])
+                s_data.setdefault("budget_pct", 33)
+
+    if "calendar" not in result or not isinstance(result["calendar"], list) or not result["calendar"]:
+        result["calendar"] = [
+            {"week": 1, "theme": "Tracking & Strategy Align", "tasks": ["Deploy landing pages", "Embed analytics pixels"]},
+            {"week": 2, "theme": "Search & Social Launch", "tasks": ["Activate ad campaigns", "Monitor CPC bids"]},
+            {"week": 3, "theme": "Lead Nurture Flow", "tasks": ["Set up automated emails", "Distribute case study"]},
+            {"week": 4, "theme": "Budget Optimization", "tasks": ["Adjust channel weights", "Review conversions"]}
+        ]
+        
+    if "budget_allocation" not in result or not isinstance(result["budget_allocation"], list) or not result["budget_allocation"]:
+        result["budget_allocation"] = [
+            {"channel": "LinkedIn Professional Ads", "percent": 50, "rationale": "High-fidelity targeting of professional buyer personas."},
+            {"channel": "Google Intent Search", "percent": 50, "rationale": "Captures active demand for operations optimization tools."}
+        ]
+
+    if "kpis" not in result or not isinstance(result["kpis"], list) or not result["kpis"]:
+        result["kpis"] = [
+            {"metric": "Cost Per Lead (CPL)", "target": "< $90.00", "measurement": "Total ad spend divided by qualified B2B leads."},
+            {"metric": "Demo Booking Rate", "target": "> 3.0%", "measurement": "Percentage of visitors completing the demo booking form."},
+            {"metric": "Sales Pipeline Deals", "target": "20+ Opportunities", "measurement": "Qualified prospects passing BANT qualification criteria."}
+        ]
     
     # Calculate realistic metric values
     budget_str = state.get('budget', 'Flexible')

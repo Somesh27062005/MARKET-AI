@@ -205,8 +205,8 @@ export default function Layout({ children, user, onLogout }) {
 
               {/* Notification Dropdown */}
               {showNotifications && (
-                <div className="absolute right-0 mt-3 w-80 glass-panel rounded-2xl p-4 shadow-xl z-30">
-                  <div className="flex items-center justify-between border-b border-white/5 pb-2 mb-3">
+                <div className="absolute right-0 mt-3 w-80 bg-white border border-slate-200/80 rounded-2xl p-4 shadow-xl z-30">
+                  <div className="flex items-center justify-between border-b border-slate-100 pb-2 mb-3">
                     <h3 className="text-sm font-semibold text-white">Recent Activity Log</h3>
                     <span className="text-xs text-indigo-400 font-medium">Auto-updated</span>
                   </div>
@@ -215,10 +215,10 @@ export default function Layout({ children, user, onLogout }) {
                       <p className="text-xs text-gray-500 text-center py-4">No recent activity detected.</p>
                     ) : (
                       activities.map((act) => (
-                        <div key={act.id} className="text-xs border-b border-white/5 pb-2 last:border-0 last:pb-0">
+                        <div key={act.id} className="text-xs border-b border-slate-100 pb-2 last:border-0 last:pb-0">
                           <p className="text-white font-medium">{act.title}</p>
                           <div className="flex items-center justify-between text-[10px] text-gray-500 mt-1">
-                            <span className="bg-white/5 px-1.5 py-0.5 rounded text-indigo-400 uppercase tracking-wider font-semibold">{act.activity_type}</span>
+                            <span className="bg-slate-100 px-1.5 py-0.5 rounded text-indigo-400 uppercase tracking-wider font-semibold">{act.activity_type}</span>
                             <span>{new Date(act.created_at).toLocaleTimeString()}</span>
                           </div>
                         </div>
@@ -245,13 +245,13 @@ export default function Layout({ children, user, onLogout }) {
               </button>
 
               {showProfileMenu && (
-                <div className="absolute right-0 mt-3 w-48 glass-panel rounded-xl py-2 shadow-xl z-30">
+                <div className="absolute right-0 mt-3 w-48 bg-white border border-slate-200/80 rounded-xl py-2 shadow-xl z-30">
                   <button 
                     onClick={() => {
                       setShowProfileMenu(false);
                       navigate('/profile');
                     }}
-                    className="w-full text-left px-4 py-2 text-sm text-gray-300 hover:bg-white/5 hover:text-white transition-colors"
+                    className="w-full text-left px-4 py-2 text-sm text-gray-300 hover:bg-slate-50 hover:text-indigo-600 transition-colors"
                   >
                     Settings & Profile
                   </button>
@@ -260,19 +260,19 @@ export default function Layout({ children, user, onLogout }) {
                       setShowProfileMenu(false);
                       navigate('/crm');
                     }}
-                    className="w-full text-left px-4 py-2 text-sm text-gray-300 hover:bg-white/5 hover:text-white transition-colors"
+                    className="w-full text-left px-4 py-2 text-sm text-gray-300 hover:bg-slate-50 hover:text-indigo-600 transition-colors"
                   >
                     CRM Leads
                   </button>
-                  <div className="border-t border-white/5 my-1"></div>
+                  <div className="border-t border-slate-100 my-1"></div>
                   <button 
                     onClick={() => {
                       setShowProfileMenu(false);
                       handleLogoutClick();
                     }}
-                    className="w-full text-left px-4 py-2 text-sm text-red-400 hover:bg-white/5 hover:text-red-300 transition-colors flex items-center space-x-2"
+                    className="w-full text-left px-4 py-2 text-sm text-rose-400 hover:bg-rose-50/50 hover:text-rose-600 transition-colors flex items-center space-x-2"
                   >
-                    <LogOut className="w-4 h-4" />
+                    <LogOut className="w-4 h-4 text-rose-400" />
                     <span>Logout</span>
                   </button>
                 </div>

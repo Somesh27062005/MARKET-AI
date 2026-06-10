@@ -752,221 +752,104 @@ def get_campaign_fallback(product, audience, platform, budget, goals, company_na
         "strategic_goals": [
             {
                 "goal_name": "Qualified Lead Generation",
-                "business_context": f"To support pipeline targets for {product}, we need to build a predictable engine capturing interested buyers in the {audience} segment.",
-                "why_it_matters": "Active leads are the lifeblood of sales development, ensuring high representative utilization and steady revenue growth.",
-                "expected_impact": "Acquisition of 250+ highly qualified leads within the first 60 days.",
-                "success_metrics": "CPL below $80, Lead-to-Opportunity conversion rate above 18%.",
-                "risks": "Audience saturation on primary channels leading to rising ad costs.",
-                "mitigation_plan": "Regularly refresh creative angles and split-test messaging variants weekly."
+                "business_context": "Build a B2B lead generation engine to capture target accounts and boost pipeline."
             },
             {
-                "goal_name": "Brand Authority & Share of Voice",
-                "business_context": f"{company_name} needs to establish industry authority for {product} against established alternatives.",
-                "why_it_matters": "Higher trust reduces sales cycles and increases average contract value.",
-                "expected_impact": "30% increase in brand search volume and social engagement.",
-                "success_metrics": "5,000+ organic views on thought-leadership pieces; 4.5% CTR on branding ads.",
-                "risks": "Content gets lost in the noise of generic industry advice.",
-                "mitigation_plan": "Publish original proprietary research and case studies demonstrating tangible ROI."
+                "goal_name": "Brand Authority & Trust",
+                "business_context": f"Establish {company_name} as a top-of-mind thought leader for {product}."
             },
             {
-                "goal_name": "Sales Funnel Velocity Optimization",
-                "business_context": "Converting awareness into purchase interest requires seamless content handoffs.",
-                "why_it_matters": "Bottlenecks in mid-funnel stages waste advertising spend and stall pipeline velocity.",
-                "expected_impact": "Reduction of average sales cycle duration by 15 days.",
-                "success_metrics": "Demo booking rate of 3.5% from landing page visitors.",
-                "risks": "Sales and marketing messaging misalignment.",
-                "mitigation_plan": "Establish bi-weekly syncs between growth teams and sales development representatives."
+                "goal_name": "Funnel Velocity Optimization",
+                "business_context": "Streamline mid-funnel content paths to accelerate lead-to-opportunity times."
             }
         ],
-        "expected_outcomes": {
-            "revenue_impact": f"Projected to drive significant incremental pipeline, targeting $150k+ in closed-won contracts attributed directly to {product} marketing campaigns.",
-            "lead_impact": f"Expected to generate a steady stream of marketing qualified leads (MQLs) looking to resolve specific challenges relevant to {audience}.",
-            "brand_impact": f"Establish {company_name} as a top-of-mind solution, boosting market brand awareness and product confidence across digital platforms.",
-            "market_position_impact": f"Establishes a strong foothold in the segment, securing a competitive posture and shifting buyer mindsets away from legacy vendors.",
-            "customer_retention_impact": f"Pre-educates prospects on product capabilities, facilitating smoother onboarding and driving higher net revenue retention."
-        },
         "persona_profile": {
-            "job_titles": ["VP of Operations", "Chief Technology Officer", "Head of Digital Strategy", "Operations Director"],
-            "responsibilities": f"Overseeing department efficiency, scaling operations, reducing manual bottlenecks, and approving vendor acquisitions for {product}.",
-            "business_challenges": "Fragmented data sources, long manual processing times, and difficulty demonstrating ROI on software investments.",
-            "pain_points": ["Lack of real-time visibility", "Inefficient team workflows", "Rising operational costs", "Underutilized data analytics"],
-            "buying_motivations": ["Increase operational efficiency", "Achieve cost savings", "Seamless tool integration", "Scalable infrastructure"],
-            "decision_triggers": ["Demonstration of clear financial ROI", "Competitor adoption case study", "Security compliance certification"],
-            "common_objections": ["High implementation effort", "Pricing budget constraints", "Satisfaction with current legacy methods"],
-            "preferred_communication_channels": ["LinkedIn", "Professional Webinars", "Industry Newsletters", "Direct Email"],
-            "preferred_content_types": ["Product Whitepapers", "Interactive Demos", "Customer Success Stories", "Executive Briefings"],
-            "purchase_journey_behaviour": "Relies heavily on peer reviews, requests interactive sandbox demos, and requires multi-department consensus before final sign-off.",
-            "budget_authority": "Sole signer for department expenses up to $50k; co-signer for enterprise-wide procurements.",
-            "expected_sales_cycle": "4 to 8 weeks depending on integration requirements and security review."
+            "business_challenges": "Struggling with operational inefficiencies, manual workflows, and high tool costs.",
+            "pain_points": [
+                "Lack of real-time visibility",
+                "Rising operational costs",
+                "Inefficient team workflows"
+            ],
+            "buying_motivations": [
+                "Increase operational efficiency",
+                "Achieve clear cost savings",
+                "Seamless system integration"
+            ]
         },
-        "funnel_analysis": {
-            "awareness_stage": {
-                "objective": f"Introduce {product} to {audience} and establish initial interest.",
-                "target_audience_behaviour": "Searching for solutions to operational inefficiencies and reading industry publications.",
-                "recommended_channels": ["LinkedIn Sponsored Content", "Google Search Ads", "Industry Podcast Sponsorships"],
-                "expected_results": "50,000+ targeted impressions, 1,200 clicks, and initial brand touchpoints.",
+        "funnel": {
+            "awareness": {
+                "tactics": ["LinkedIn Ads", "Google Search Ads", "SEO Blog Posts"],
+                "kpis": ["Impressions", "Clicks", "Click-Through Rate (CTR)"],
                 "budget_pct": 35
             },
-            "consideration_stage": {
-                "customer_mindset": "Evaluating different tools and comparing features, implementation costs, and security compliance.",
-                "key_content": ["Comparison Guides", "ROI Calculators", "Product Demo Videos", "Expert Webinars"],
-                "conversion_drivers": ["Interactive sandbox access", "Detailed security whitepapers", "Customer testimonial case studies"],
+            "consideration": {
+                "tactics": ["Product Whitepapers", "Interactive Webinars", "Client Case Studies"],
+                "kpis": ["Downloads", "Webinar Registrants", "Demo Page Visits"],
                 "budget_pct": 40
             },
-            "conversion_stage": {
-                "sales_activities": ["Direct sales outreach", "Tailored product walkthroughs", "Custom price quotations"],
-                "closing_strategies": ["Limited-time onboarding incentives", "Pilot proof-of-concept projects", "Executive alignment meetings"],
-                "performance_indicators": ["Demo-to-proposal conversion rate", "Contract signature turnaround time", "Close-won win rate"],
+            "conversion": {
+                "tactics": ["Free Sandbox Trial", "1-on-1 Consultation", "Onboarding Incentive"],
+                "kpis": ["Signups", "Demos Booked", "Conversion Rate (CVR)"],
                 "budget_pct": 25
-            },
-            "retention_stage": {
-                "customer_success_activities": ["Dedicated account manager onboarding", "Quarterly business reviews", "User training academy"],
-                "upsell_opportunities": ["Enterprise tier upgrades", "Additional seat licensing", "Advanced analytics modules"],
-                "loyalty_strategy": "Establish a customer advisory board and offer early access to new product releases."
             }
         },
-        "budget_allocation_rationale": [
+        "budget_allocation": [
             {
-                "channel": "LinkedIn Professional Ads",
-                "allocation_pct": 40,
-                "reasoning": f"Allows precise targeting of {audience} by job title, industry, and company size, ensuring minimal ad spend wastage.",
-                "expected_roi": "3.2x pipeline return on ad spend",
-                "advantages": ["High-intent B2B targeting", "Direct lead-gen forms integration", "Premium brand positioning"],
-                "risks": ["Higher average CPC compared to other channels", "Requires frequent creative refreshes"],
-                "success_metrics": ["Cost per MQL", "Click-through rate (CTR) > 1.2%"]
+                "channel": "LinkedIn Ads",
+                "percent": 40,
+                "rationale": f"Allows precise targeting of {audience} by professional job titles, ensuring minimal waste."
             },
             {
-                "channel": "Google Intent Search",
-                "allocation_pct": 35,
-                "reasoning": f"Captures prospects actively searching for solutions related to {product} USPs, leading to higher conversion rates.",
-                "expected_roi": "4.1x conversion return on ad spend",
-                "advantages": ["High purchase intent", "Captures active demand", "Immediate traffic generation"],
-                "risks": ["Highly competitive search terms", "Limited by search volume"],
-                "success_metrics": ["Ad quality score", "Conversion rate (CVR) > 3.5%"]
+                "channel": "Google Search Ads",
+                "percent": 35,
+                "rationale": "Captures high-intent prospects actively searching for automated workflow tools."
             },
             {
-                "channel": "Industry Newsletters & Content Syndication",
-                "allocation_pct": 25,
-                "reasoning": f"Builds long-term thought leadership and trust within the broader {audience} ecosystem.",
-                "expected_roi": "2.8x brand value multiplier",
-                "advantages": ["High credibility", "Fixed costs structures", "Reaches passive prospects"],
-                "risks": ["Longer conversion attribution cycles", "Requires high-quality content production"],
-                "success_metrics": ["Total downloads", "Email open and click-through rates"]
+                "channel": "Content & Email Nurture",
+                "percent": 25,
+                "rationale": "Engages interested leads, driving them down the conversion path with case studies."
             }
         ],
-        "kpi_explanations": [
+        "kpis": [
             {
-                "kpi_name": "Cost Per Qualified Lead (CPQL)",
-                "what_it_measures": "Total marketing expenditure divided by the number of leads meeting BANT qualification criteria.",
-                "why_it_matters": "Ensures marketing budget is directed toward high-value prospects rather than low-quality traffic.",
-                "industry_benchmark": "$95.00 - $120.00",
-                "expected_value": "$85.00",
-                "success_threshold": "< $105.00",
-                "risk_indicators": "CPQL exceeding $120.00 or conversion rate from MQL to SQL dropping below 10%.",
-                "optimization_strategy": "Refine audience exclusion lists and improve post-click landing page relevance."
+                "metric": "Cost Per Lead (CPL)",
+                "target": "< $80.00",
+                "measurement": "Total campaign ad spend divided by the number of captured B2B leads."
             },
             {
-                "kpi_name": "Lead-to-Opportunity Win Rate",
-                "what_it_measures": "Percentage of sales-qualified leads that progress to active sales pipeline opportunities.",
-                "why_it_matters": "Measures the quality of marketing handoffs and sales alignment efficiency.",
-                "industry_benchmark": "15.0%",
-                "expected_value": "18.5%",
-                "success_threshold": "> 14.0%",
-                "risk_indicators": "Opportunities stalling in the qualification stage for more than 21 days.",
-                "optimization_strategy": "Standardize discovery call templates and implement automated follow-up sequences."
+                "metric": "Demo Booking Rate",
+                "target": "> 3.5%",
+                "measurement": "Percentage of landing page visitors who sign up for a product demo."
             },
             {
-                "kpi_name": "Customer Acquisition Cost (CAC) Payback Period",
-                "what_it_measures": "The number of months of customer revenue required to recover the marketing and sales cost to acquire them.",
-                "why_it_matters": "Directly impacts company cash flow and long-term business scalability.",
-                "industry_benchmark": "12 months",
-                "expected_value": "9.5 months",
-                "success_threshold": "< 11 months",
-                "risk_indicators": "Payback period ballooning due to discounting or declining contract values.",
-                "optimization_strategy": "Focus campaign budget on high-retention segments and increase upsell activities."
+                "metric": "Pipeline Opportunities",
+                "target": "30+ Deals",
+                "measurement": "Number of qualified leads passing BANT qualification to active sales pipeline."
             }
         ],
-        "kpi_commentary": f"These KPIs are chosen to align marketing investment directly with sales efficiency and business health. By focusing on CPQL and sales velocity, we ensure {company_name} maximizes return on ad spend.",
         "content_ideas": filtered_content_ideas,
         "ad_copies": filtered_ad_copies,
-        "cta_suggestions": ["Request Custom Demo", "Calculate Your ROI", "Read Client Success Story", "Access Free Trial"],
         "social_media_posts": filtered_posts,
-        "estimated_reach": calc_reach,
-        "estimated_ctr": calc_ctr,
-        "estimated_cvr": calc_cvr,
-        "timeline_weeks": 8,
-        "roadmap_actions": [
+        "calendar": [
             {
-                "week_number": 1,
-                "week_theme": "Strategy Align & Content Launch",
-                "actions": [
-                    {
-                        "action_name": "Deploy Landing Pages and Tracking",
-                        "objective": "Establish a high-converting landing destination with robust analytics parameters in place.",
-                        "business_reasoning": "Accurate attribution tracking ensures we can optimize channels based on real conversion performance.",
-                        "execution_steps": ["Build customized landing pages", "Embed analytics pixels", "Perform forms integration tests"],
-                        "required_resources": ["Web Designer", "Marketing Operations specialist"],
-                        "responsible_team": "Growth Marketing Team",
-                        "expected_kpi_impact": ["100% data capture rate", "Landing page load speed < 1.5s"],
-                        "dependencies": ["Finalized product branding materials"],
-                        "risk_level": "Low",
-                        "expected_outcome": "Fully tested conversion pages ready for incoming traffic."
-                    }
-                ]
+                "week": 1,
+                "theme": "Tracking & Strategy Alignment",
+                "tasks": ["Deploy conversion landing pages", "Embed analytics pixels", "Test form submissions"]
             },
             {
-                "week_number": 2,
-                "week_theme": "Paid Traffic Activation",
-                "actions": [
-                    {
-                        "action_name": "Launch Search and Social Campaigns",
-                        "objective": "Initiate target audience acquisition across LinkedIn and Google Search channels.",
-                        "business_reasoning": "Early data collection allows us to identify high-performing search terms and refine ad copy quickly.",
-                        "execution_steps": ["Activate pre-scheduled search ads", "Launch sponsored content sets", "Monitor initial ad delivery rates"],
-                        "required_resources": ["Ad budget clearance", "Copywriter approval"],
-                        "responsible_team": "Paid Acquisition Team",
-                        "expected_kpi_impact": ["CTR > 1.1% on LinkedIn", "Cost-per-click under $6.50"],
-                        "dependencies": ["Completed creative ad copy approvals"],
-                        "risk_level": "Medium",
-                        "expected_outcome": "Steady inflow of targeted traffic and initial lead generations."
-                    }
-                ]
+                "week": 2,
+                "theme": "Search & Social Activation",
+                "tasks": ["Launch LinkedIn sponsored posts", "Activate Google Search campaigns", "Monitor CPC bids"]
             },
             {
-                "week_number": 3,
-                "week_theme": "Mid-Funnel Nurturing",
-                "actions": [
-                    {
-                        "action_name": "Activate Email Drip Sequences",
-                        "objective": "Nurture generated leads with highly relevant case studies and product demo offers.",
-                        "business_reasoning": "Engaging leads within the first 7 days maximizes conversion likelihood and speeds up sales cycles.",
-                        "execution_steps": ["Set up automated email flows", "Synthesize client success stories", "A/B test email subject lines"],
-                        "required_resources": ["Marketing automation tools", "Copywriter"],
-                        "responsible_team": "Lifecycle Marketing Team",
-                        "expected_kpi_impact": ["Email open rate > 25%", "Demo booking rate of 4%"],
-                        "dependencies": ["Leads generated in Week 2"],
-                        "risk_level": "Low",
-                        "expected_outcome": "Progressing warm prospects to booked discovery calls."
-                    }
-                ]
+                "week": 3,
+                "theme": "Mid-Funnel Lead Nurture",
+                "tasks": ["Set up automated email flow", "Publish target case studies", "Distribute whitepaper"]
             },
             {
-                "week_number": 4,
-                "week_theme": "Optimization & Retargeting",
-                "actions": [
-                    {
-                        "action_name": "Launch Retargeting Ads",
-                        "objective": "Re-engage site visitors who did not complete the conversion form.",
-                        "business_reasoning": "Retargeting yields the highest ROI by focusing ad spend on warm prospects who have already demonstrated interest.",
-                        "execution_steps": ["Build custom retargeting audiences", "Design distinct retargeting copy", "Allocate 15% budget here"],
-                        "required_resources": ["Creative banners", "Retargeting setup specialist"],
-                        "responsible_team": "Growth Marketing Team",
-                        "expected_kpi_impact": ["30% lower cost per conversion", "MQL volume boost by 15%"],
-                        "dependencies": ["Sufficient site traffic from Week 2 and 3"],
-                        "risk_level": "Low",
-                        "expected_outcome": "Recaptured lost opportunities and boosted campaign conversion rates."
-                    }
-                ]
+                "week": 4,
+                "theme": "Optimizations & Retargeting",
+                "tasks": ["Launch custom retargeting ads", "Adjust platform budget weights", "Analyze initial ROI"]
             }
         ]
     }
@@ -1645,6 +1528,16 @@ def get_insights_fallback(business_type, challenges, goals, company_name) -> dic
             {"initiative": "Case study content push", "urgency": "High", "impact": "Medium"},
             {"initiative": "Collaborative resource library", "urgency": "Low", "impact": "Medium"},
             {"initiative": "Interactive self-serve sandbox / demo", "urgency": "Medium", "impact": "High"}
+        ],
+        "competitive_risks": [
+            {"risk": "Competitor pricing pressure", "competitor": "Competitor A", "likelihood": "Medium"},
+            {"risk": "Alternative feature parity release", "competitor": "Competitor B", "likelihood": "High"},
+            {"risk": "Aggressive market reach expansion", "competitor": "Competitor C", "likelihood": "Low"}
+        ],
+        "operational_risks": [
+            {"risk": "System integration bottlenecks", "probability": "Medium", "impact": "High", "mitigation": "Provide dedicated integration assistance during onboarding."},
+            {"risk": "Employee adoption resistance", "probability": "Low", "impact": "Medium", "mitigation": "Hold weekly training sessions and distribute simplified guidebooks."},
+            {"risk": "Data sync latency", "probability": "Low", "impact": "Low", "mitigation": "Optimize database queries and use local secure storage fallback."}
         ]
     }
 
