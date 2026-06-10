@@ -630,18 +630,26 @@ def get_analysis_reports(email, module=None, limit=50):
     conn = get_db()
     if module:
         rows = conn.execute(
-            "SELECT id, user_email, module, title, confidence_score, created_at FROM analysis_reports "
+            "SELECT id, user_email, module, title, result_json, confidence_score, created_at FROM analysis_reports "
             "WHERE user_email = ? AND module = ? ORDER BY created_at DESC LIMIT ?",
             (email, module, limit)
         ).fetchall()
     else:
         rows = conn.execute(
-            "SELECT id, user_email, module, title, confidence_score, created_at FROM analysis_reports "
+            "SELECT id, user_email, module, title, result_json, confidence_score, created_at FROM analysis_reports "
             "WHERE user_email = ? ORDER BY created_at DESC LIMIT ?",
             (email, limit)
         ).fetchall()
     conn.close()
-    return [dict(r) for r in rows]
+    results = []
+    for r in rows:
+        d = dict(r)
+        try:
+            d["result_json"] = json.loads(d["result_json"]) if d.get("result_json") else {}
+        except Exception:
+            d["result_json"] = {}
+        results.append(d)
+    return results
 
 
 def get_analysis_report_by_id(email, report_id):
