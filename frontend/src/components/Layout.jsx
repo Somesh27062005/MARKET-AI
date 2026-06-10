@@ -12,7 +12,6 @@ import {
   Database, 
   Settings, 
   LogOut, 
-  Bell, 
   ChevronDown, 
   Globe, 
   Flame,
@@ -24,8 +23,6 @@ export default function Layout({ children, user, onLogout }) {
   const navigate = useNavigate();
   const location = useLocation();
   const [stockPrices, setStockPrices] = useState([]);
-  const [activities, setActivities] = useState([]);
-  const [showNotifications, setShowNotifications] = useState(false);
   const [showProfileMenu, setShowProfileMenu] = useState(false);
   const [companyName, setCompanyName] = useState('MarketMind AI');
 
@@ -57,12 +54,6 @@ export default function Layout({ children, user, onLogout }) {
             setCompanyName(statsData.company_metrics.company_name);
           }
         }
-        
-        const activityRes = await fetch('/api/activity?limit=5');
-        if (activityRes.ok) {
-          const actData = await activityRes.json();
-          setActivities(actData.activities || []);
-        }
       } catch (err) {
         console.error("Layout data fetch error:", err);
       }
@@ -72,38 +63,6 @@ export default function Layout({ children, user, onLogout }) {
     const interval = setInterval(fetchData, 15000); // refresh every 15s
     return () => clearInterval(interval);
   }, []);
-
-  const handleActivityClick = (act) => {
-    const reportId = act.metadata?.report_id;
-    if (!reportId) return;
-
-    setShowNotifications(false);
-
-    let path = '';
-    switch (act.activity_type) {
-      case 'campaign_generated':
-        path = '/campaigns';
-        break;
-      case 'pitch_created':
-        path = '/pitch';
-        break;
-      case 'lead_scored':
-        path = '/leads';
-        break;
-      case 'market_analyzed':
-        path = '/market';
-        break;
-      case 'insight_generated':
-        path = '/insights';
-        break;
-      default:
-        return;
-    }
-
-    if (path) {
-      navigate(path, { state: { loadReportId: reportId } });
-    }
-  };
 
   const handleLogoutClick = async () => {
     try {
@@ -220,66 +179,11 @@ export default function Layout({ children, user, onLogout }) {
 
           {/* Right Header Operations */}
           <div className="flex items-center space-x-4 shrink-0 relative">
-            {/* Notification Bell */}
-            <div className="relative">
-              <button 
-                onClick={() => {
-                  setShowNotifications(!showNotifications);
-                  setShowProfileMenu(false);
-                }}
-                className={`p-2 rounded-xl transition-all relative hover:bg-white/5 ${showNotifications ? 'bg-indigo-600/10 text-indigo-400' : 'text-gray-400 hover:text-white'}`}
-              >
-                <Bell className="w-5 h-5" />
-                {activities.length > 0 && (
-                  <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-indigo-500 rounded-full animate-ping"></span>
-                )}
-              </button>
-
-              {/* Notification Dropdown */}
-              {showNotifications && (
-                <div className="absolute right-0 mt-3 w-80 bg-white border border-slate-200/80 rounded-2xl p-4 shadow-xl z-30">
-                  <div className="flex items-center justify-between border-b border-slate-100 pb-2 mb-3">
-                    <h3 className="text-sm font-semibold text-slate-800">Recent Activity Log</h3>
-                    <span className="text-xs text-indigo-400 font-medium">Auto-updated</span>
-                  </div>
-                  <div className="space-y-3 max-h-64 overflow-y-auto custom-scrollbar pr-1">
-                    {activities.length === 0 ? (
-                      <p className="text-xs text-gray-500 text-center py-4">No recent activity detected.</p>
-                    ) : (
-                      activities.map((act) => {
-                        const hasReport = !!act.metadata?.report_id;
-                        return (
-                          <div 
-                            key={act.id} 
-                            onClick={() => hasReport && handleActivityClick(act)}
-                            className={`text-xs border-b border-slate-100 pb-2 last:border-0 last:pb-0 ${
-                              hasReport 
-                                ? 'cursor-pointer hover:bg-slate-50 hover:text-indigo-600 p-1.5 rounded-xl transition-all' 
-                                : 'p-1.5'
-                            }`}
-                          >
-                            <p className="text-slate-800 font-medium leading-normal hover:text-indigo-600 transition-colors">{act.title}</p>
-                            <div className="flex items-center justify-between text-[10px] text-gray-500 mt-1">
-                              <span className="bg-indigo-50 px-1.5 py-0.5 rounded text-indigo-600 uppercase tracking-wider font-semibold">
-                                {act.activity_type?.replace('_', ' ')}
-                              </span>
-                              <span>{new Date(act.created_at).toLocaleTimeString()}</span>
-                            </div>
-                          </div>
-                        );
-                      })
-                    )}
-                  </div>
-                </div>
-              )}
-            </div>
-
             {/* Profile Dropdown */}
             <div className="relative">
               <button 
                 onClick={() => {
                   setShowProfileMenu(!showProfileMenu);
-                  setShowNotifications(false);
                 }}
                 className="flex items-center space-x-2 p-1.5 rounded-xl hover:bg-white/5 transition-all text-gray-400 hover:text-white"
               >
