@@ -77,7 +77,7 @@ export default function Layout({ children, user, onLogout }) {
     }
 
     fetchData();
-    const interval = setInterval(fetchData, 15000); // refresh every 15s
+    const interval = setInterval(fetchData, 60000); // refresh every 1m
     return () => clearInterval(interval);
   }, []);
 
