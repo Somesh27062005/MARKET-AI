@@ -150,7 +150,7 @@ else:
 app = Flask(__name__)
 app.secret_key = os.getenv("SECRET_KEY", "marketmind-dev-secret-key-change-in-production")
 # Note: no trailing slash on the Vercel origin
-CORS(app, supports_credentials=True, origins=["http://localhost:5173", "http://127.0.0.1:5173", "https://market-master-ai-rust.vercel.app"])
+CORS(app, supports_credentials=True, origins=["http://localhost:5173", "http://127.0.0.1:5173", "https://market-ai-kappa.vercel.app"])
 
 import secrets
 import time
@@ -411,10 +411,10 @@ def auth_logout():
 
 @app.route("/api/auth/google")
 def auth_google():
-    referrer = request.headers.get("Referer") or request.referrer or "https://market-master-ai-rust.vercel.app"
+    referrer = request.headers.get("Referer") or request.referrer or "https://market-ai-kappa.vercel.app"
     frontend_origin = referrer.split("/login")[0].rstrip("/")
     if not frontend_origin.startswith("http"):
-        frontend_origin = "https://market-master-ai-rust.vercel.app"
+        frontend_origin = "https://market-ai-kappa.vercel.app"
 
     session["oauth_frontend_origin"] = frontend_origin
 
@@ -428,7 +428,7 @@ def auth_google():
     if "localhost" in request.host or "127.0.0.1" in request.host:
         redirect_uri = "http://localhost:5000/api/auth/google/callback"
     else:
-        redirect_uri = "https://market-master-ai.onrender.com/api/auth/google/callback"
+        redirect_uri = "https://market-ai-60zl.onrender.com/api/auth/google/callback"
 
     request_uri = client.prepare_request_uri(
         authorization_endpoint,
@@ -447,7 +447,7 @@ def auth_google_callback():
     if "localhost" in request.host or "127.0.0.1" in request.host:
         redirect_uri = "http://localhost:5000/api/auth/google/callback"
     else:
-        redirect_uri = "https://market-master-ai.onrender.com/api/auth/google/callback"
+        redirect_uri = "https://market-ai-60zl.onrender.com/api/auth/google/callback"
 
     token_url, headers, body = client.prepare_token_request(
         token_endpoint,
@@ -488,7 +488,7 @@ def auth_google_callback():
     if not user:
         database.create_user(users_email, "google-oauth", users_name, users_name, last_name, picture)
 
-    frontend_origin = session.get("oauth_frontend_origin", "https://market-master-ai-rust.vercel.app")
+    frontend_origin = session.get("oauth_frontend_origin", "https://market-ai-kappa.vercel.app")
 
     if "localhost" in request.host or "127.0.0.1" in request.host:
         # Local: set session cookie directly and redirect
@@ -2993,5 +2993,5 @@ if __name__ == "__main__":
         print("   ⛓️  LangChain + LangGraph workflows compiled\n")
 
     print("🚀 MarketMind AI is starting...")
-    print("Open https://market-master-ai-rust.vercel.app in your browser\n")
+    print("Open https://market-ai-kappa.vercel.app in your browser\n")
     app.run(debug=True, port=5000, use_reloader=False)
