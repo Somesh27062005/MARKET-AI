@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Flame, Mail, Lock, User, RefreshCw, LogIn, Globe } from 'lucide-react';
 import GlassCard from './GlassCard.jsx';
 
@@ -10,6 +10,48 @@ export default function Auth({ onAuthSuccess }) {
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
   const [loading, setLoading] = useState(false);
+
+  // After Google OAuth redirect, check for one-time token (ott) in URL and exchange it for a session
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const googleLogin = params.get('google_login');
+    const ott = params.get('ott');
+
+    if (googleLogin === 'success' && ott) {
+      setLoading(true);
+      setSuccess('Authenticating with Google...');
+      // Clean URL params without reloading
+      window.history.replaceState({}, document.title, window.location.pathname);
+      fetch('/api/auth/google/token-exchange', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ token: ott }),
+      })
+        .then((res) => res.json())
+        .then((data) => {
+          if (data.success) {
+            onAuthSuccess(data.user);
+          } else {
+            setError(data.error || 'Google login failed. Please try again.');
+            setLoading(false);
+          }
+        })
+        .catch(() => {
+          setError('Network error during Google login. Please try again.');
+          setLoading(false);
+        });
+    } else if (googleLogin === 'success' && !ott) {
+      // Local dev: session cookie was set directly, just re-check auth
+      fetch('/api/auth/me', { credentials: 'include' })
+        .then((res) => res.json())
+        .then((data) => {
+          if (data.user) onAuthSuccess(data.user);
+          window.history.replaceState({}, document.title, window.location.pathname);
+        })
+        .catch(() => {});
+    }
+  }, []);
 
   const handleSubmit = async (e) => {
     e.preventDefault();

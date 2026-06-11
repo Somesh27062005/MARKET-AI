@@ -1,157 +1,76 @@
 # MarketMind AI — Sales & Marketing Intelligence Platform
 
-> **Generative AI-Powered** enterprise sales and marketing intelligence platform leveraging Groq's LLaMA models for real-time campaign generation, pitch creation, lead scoring, market analysis, and business insights. Driven by a multi-agent orchestrated architecture, it provides deep strategic briefs, interactive chat support, and visual media generators.
+> **Generative AI-Powered** sales and marketing intelligence platform leveraging Groq's LLaMA 3.3 70B model for real-time campaign generation, pitch creation, lead scoring, market analysis, and business insights.
 
----
-
-## 🚀 Key Features
+## 🚀 Features
 
 | Feature | Description |
 |---------|-------------|
-| **Campaign Generator** | Multi-channel marketing campaign designer (LinkedIn, Facebook, Email, etc.) featuring content ideas, ad copies, visual vibe suggestions, and editorial calendars. |
-| **Sales Pitch Creator** | Craft highly targeted, personalized sales pitches containing elevator pitches, core value propositions, customer pain points, objection handling, and follow-up templates. |
-| **Logo Maker AI** | Instantly design modern logo concepts and store vector/base64 history in the database. |
-| **Lead Scoring (BANT)** | AI-powered lead qualification using BANT (Budget, Authority, Need, Timeline) parameters, probability mapping, and actionable conversion roadmaps. |
-| **Market Analysis** | Market sizing tools (TAM/SAM/SOM), SWOT analysis matrices, target audience profiling, and competitive intelligence databases. |
-| **Business Insights** | Multi-stage business diagnostics, bottleneck identification reports, Urgency-Impact matrices, and 30/60/90 day execution roadmaps. |
-| **Interactive Chat Assistant** | Specialized domain chat assistants (Marketing, Sales, General) built on top of chat histories for quick on-the-spot strategy brainstorming. |
-| **Ad Poster Maker** | Visual description prompt generator paired with direct Pollinations AI / Flux model integration for high-quality marketing graphics. |
-| **PPTX / Strategy Exporter** | Export strategic dashboards and multi-agent report briefs directly into custom presentation slide decks (`.pptx`). |
-
----
+| **Campaign Generator** | Create data-driven marketing campaigns with content ideas, ad copy, and platform strategies |
+| **Sales Pitch Creator** | Craft personalized pitches with elevator pitches, value propositions, and objection handling |
+| **Lead Scoring** | AI-powered lead qualification with BANT scoring, conversion probability, and action plans |
+| **Market Analysis** | Comprehensive market intelligence with SWOT, trends, and competitive landscape |
+| **Business Insights** | Strategic insights with growth opportunities, risk analysis, and 90-day action plans |
 
 ## 🛠 Tech Stack
 
-- **Backend:** Flask (Python 3.12)
-- **AI Orchestration:** LangChain, LangGraph (workflow management)
-- **AI Models:** Groq Console API (LLaMA-3.3-70B Versatile, LLaMA-3-8B Instant)
-- **Frontend:** React 18, Vite, Tailwind CSS, Framer Motion
-- **Visualizations:** Chart.js, Recharts, Lucide Icons
-- **Database:** SQLite (local development) / PostgreSQL (production compatible)
+- **Backend:** Flask (Python)
+- **AI Model:** Groq API — LLaMA 3.3 70B Versatile
+- **Frontend:** HTML5, CSS3, JavaScript (Vanilla)
+- **Styling:** Custom dark theme with glassmorphism design system
 
----
+## ⚡ Quick Start
 
-## 🤖 Multi-Agent Architecture
+### 1. Clone & Install
 
-MarketMind AI implements a hierarchical **AgentOrchestrator** model which coordinates specialized analytical agents to generate standard business briefs:
-
-```mermaid
-graph TD
-    A[User Input / Profile Settings] --> B(AgentOrchestrator)
-    B --> C[Assumption Framework Agent]
-    C --> D[Business Consultant Agent]
-    C --> E[Market Intelligence Agent]
-    C --> F[Lead Qualification Agent]
-    C --> G[Campaign Strategist Agent]
-    B --> H{Consolidated Strategy Brief}
-    H --> I[Roadmaps & Timeline]
-    H --> J[SWOT & Competitor Matrix]
-    H --> K[Urgency & Bottlenecks]
+```bash
+git clone <repo-url>
+cd resilient-pascal
+pip install -r requirements.txt
 ```
 
-1. **Campaign Strategist:** Suggests visual vibes, headlines, CTAs, and plans multichannel touchpoints.
-2. **Lead Qualification Agent:** Scores leads on BANT criteria and suggests qualification playbooks.
-3. **Market Intelligence Agent:** Profiles TAM/SAM/SOM, estimates target benchmarks, and assesses competitors.
-4. **Business Consultant:** Reviews business models, runs growth simulations, and drafts the 30/60/90 day roadmap.
-5. **Sales Agent:** Prepares sales messaging, objection handling scripts, and value hooks.
+### 2. Configure API Key
 
----
+Create a `.env` file in the project root:
+
+```
+GROQ_API_KEY=your_groq_api_key_here
+```
+
+Get your API key at [console.groq.com](https://console.groq.com)
+
+### 3. Run
+
+```bash
+python app.py
+```
+
+Open [http://localhost:5000](http://localhost:5000) in your browser.
 
 ## 📁 Project Structure
 
 ```
-MARKET-AI/
-├── backend/
-│   ├── agents/               # Specialized multi-agent logic
-│   │   ├── base.py           # Core LLM prompt structures
-│   │   ├── business_consultant.py
-│   │   ├── campaign_strategy.py
-│   │   ├── lead_qualification.py
-│   │   ├── market_intelligence.py
-│   │   └── sales_agent.py
-│   ├── app.py                # Flask main router & endpoints
-│   ├── database.py           # Database models, migrations, & seeding
-│   ├── orchestrator.py       # Orchestrates sequential business reports
-│   ├── prompt_templates.py   # System instruction templates
-│   ├── report_generator.py   # Multi-agent brief generators
-│   ├── schemas.py            # Pydantic validation schemas
-│   └── requirements.txt      # Python dependencies
-├── frontend/
-│   ├── src/
-│   │   ├── components/       # Auth, ChatAssistant, GlassCard, Layout
-│   │   ├── pages/            # Dashboard, Profile, LogoMaker, CampaignGenerator, etc.
-│   │   ├── App.jsx           # Route router & global context
-│   │   └── index.css         # Styling system & custom glassmorphism design
-│   ├── package.json          # Node dependencies
-│   ├── vite.config.js        # Vite settings & dev proxy rules
-│   └── tailwind.config.js    # Tailwind layout overrides
-├── marketmind.db             # SQLite database file
-├── GOOGLE_LOGIN_INSTRUCTIONS.md # Production OAuth configurations
-└── README.md                 # Project documentation
+resilient-pascal/
+├── app.py               # Flask backend with all AI routes
+├── requirements.txt     # Python dependencies
+├── .env.example         # Environment variable template
+├── static/
+│   └── style.css        # Premium dark theme design system
+└── templates/
+    └── index.html       # Single-page app with all features
 ```
 
----
+## 🔑 API Configuration
 
-## ⚡ Quick Start
+| Setting | Value |
+|---------|-------|
+| Model | `llama-3.3-70b-versatile` |
+| Host | `127.0.0.1` (localhost) |
+| Port | `5000` |
+| Debug Mode | `True` (development) |
 
-### Prerequisites
-- Python 3.12+
-- Node.js 18+
-- Groq API Key (Register at [console.groq.com](https://console.groq.com))
+## 📋 Test Cases
 
-### 1. Configure API Keys & Environment
-Create a `.env` file in the project root directory:
-
-```env
-GROQ_API_KEY=your_groq_api_key_here
-SECRET_KEY=change_this_to_something_secure
-
-# Optional: Google OAuth Configuration
-GOOGLE_CLIENT_ID=your_google_client_id
-GOOGLE_CLIENT_SECRET=your_google_client_secret
-GOOGLE_DISCOVERY_URL=https://accounts.google.com/.well-known/openid-configuration
-```
-
-### 2. Set Up Python Backend
-Recreate and configure the Python virtual environment:
-
-```bash
-# Go to workspace root
-cd MARKET-AI
-
-# Create virtual environment
-python -m venv backend/venv
-
-# Activate virtual environment
-# Windows:
-backend\venv\Scripts\activate
-# macOS/Linux:
-source backend/venv/bin/activate
-
-# Install dependencies
-pip install -r backend/requirements.txt
-
-# Start the Flask backend
-python backend/app.py
-```
-The Flask backend will launch at [http://localhost:5000](http://localhost:5000) and automatically configure the database schema in `marketmind.db`.
-
-### 3. Set Up React Frontend
-Open another terminal pane:
-
-```bash
-# Go to frontend folder
-cd MARKET-AI/frontend
-
-# Install node dependencies
-npm install
-
-# Start Vite development server
-npm run dev
-```
-The React frontend will launch at [http://localhost:5173](http://localhost:5173). Requests starting with `/api` are automatically proxied to the Flask server.
-
----
-
-## 🔑 Google OAuth 2.0 Configuration
-Google Login is supported! Read the step-by-step setup in [GOOGLE_LOGIN_INSTRUCTIONS.md](file:///d:/MARKET-AI/GOOGLE_LOGIN_INSTRUCTIONS.md) to register your app credentials on the Google Cloud Console.
+1. **Campaign Generation:** Product: "AI email marketing platform" → Target: "Marketing managers, e-commerce" → Platform: "LinkedIn, Facebook"
+2. **Sales Pitch:** Product: "Cloud inventory management" → Customer: "Fortune 500 retail, Operations Director"
+3. **Lead Scoring:** Lead: "Sarah Johnson" → Budget: "$150,000" → Need: "Customer retention" → Urgency: "High priority, Q3 deadline"

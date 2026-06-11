@@ -149,9 +149,30 @@ else:
 
 app = Flask(__name__)
 app.secret_key = os.getenv("SECRET_KEY", "marketmind-dev-secret-key-change-in-production")
-CORS(app, supports_credentials=True, origins=["http://localhost:5173", "http://127.0.0.1:5173"])
+# Note: no trailing slash on the Vercel origin
+CORS(app, supports_credentials=True, origins=["http://localhost:5173", "http://127.0.0.1:5173", "https://market-master-ai-rust.vercel.app"])
 
 import secrets
+import time
+import hmac
+import hashlib
+
+# Short-lived token store for Google OAuth token exchange (email -> token)
+_oauth_tokens = {}  # { token: (email, expire_timestamp) }
+
+def _generate_oauth_token(email):
+    token = secrets.token_urlsafe(32)
+    _oauth_tokens[token] = (email, time.time() + 120)  # valid 2 minutes
+    return token
+
+def _consume_oauth_token(token):
+    entry = _oauth_tokens.pop(token, None)
+    if not entry:
+        return None
+    email, expires = entry
+    if time.time() > expires:
+        return None
+    return email
 
 @app.before_request
 def handle_csrf():
@@ -171,7 +192,15 @@ def handle_csrf():
 def set_csrf_cookie(response):
     if "csrf_token" not in session:
         session["csrf_token"] = secrets.token_hex(32)
-    response.set_cookie("csrf_token", session["csrf_token"], samesite="Lax", secure=False)
+    # Use SameSite=None + Secure for cross-domain (Render backend + Vercel frontend)
+    is_prod = not ("localhost" in request.host or "127.0.0.1" in request.host)
+    response.set_cookie(
+        "csrf_token",
+        session["csrf_token"],
+        samesite="None" if is_prod else "Lax",
+        secure=is_prod,
+        httponly=False
+    )
     return response
 
 # Initialize database schema
@@ -204,9 +233,6 @@ def get_google_provider_cfg():
 
 
 def safe_llm_invoke(messages, temperature=0.7):
-    """
-    Invoke Groq LLM with fallback to llama-3.1-8b-instant if llama-3.3-70b-versatile fails (e.g. 429).
-    """
     primary_model = "llama-3.3-70b-versatile"
     fast_model = "llama-3.1-8b-instant"
     try:
@@ -234,12 +260,8 @@ def safe_llm_invoke(messages, temperature=0.7):
 
 
 def clean_markdown(text: str) -> str:
-    """Clean excessive markdown formatting for display."""
     return re.sub(r'\*{3,}', '', text)
 
-
-
-# ─── Flask Routes ────────────────────────────────────────────────────────────
 
 # In-memory user database (removed)
 USERS_DB = {}
@@ -389,15 +411,24 @@ def auth_logout():
 
 @app.route("/api/auth/google")
 def auth_google():
+    referrer = request.headers.get("Referer") or request.referrer or "https://market-master-ai-rust.vercel.app"
+    frontend_origin = referrer.split("/login")[0].rstrip("/")
+    if not frontend_origin.startswith("http"):
+        frontend_origin = "https://market-master-ai-rust.vercel.app"
+
+    session["oauth_frontend_origin"] = frontend_origin
+
     if not client:
-        return redirect("http://localhost:5173/login?error=Google%20OAuth%20not%20configured%20on%20backend")
+        return redirect(f"{frontend_origin}/login?error=Google%20OAuth%20not%20configured%20on%20backend")
 
     google_provider_cfg = get_google_provider_cfg()
     authorization_endpoint = google_provider_cfg["authorization_endpoint"]
 
-    # Use a consistent redirect_uri regardless of how the proxy forwarded the request
-    # Often Vite forwards as 127.0.0.1 but the browser is on localhost, causing a mismatch.
-    redirect_uri = "http://localhost:5000/api/auth/google/callback"
+    # Always use the backend's own domain as redirect_uri — this must match Google Cloud Console exactly
+    if "localhost" in request.host or "127.0.0.1" in request.host:
+        redirect_uri = "http://localhost:5000/api/auth/google/callback"
+    else:
+        redirect_uri = "https://market-master-ai.onrender.com/api/auth/google/callback"
 
     request_uri = client.prepare_request_uri(
         authorization_endpoint,
@@ -411,9 +442,13 @@ def auth_google_callback():
     code = request.args.get("code")
     google_provider_cfg = get_google_provider_cfg()
     token_endpoint = google_provider_cfg["token_endpoint"]
-    redirect_uri = "http://localhost:5000/api/auth/google/callback"
 
-    # Use the same redirect_uri that was sent in the initial request
+    # Must exactly match what was sent in auth_google
+    if "localhost" in request.host or "127.0.0.1" in request.host:
+        redirect_uri = "http://localhost:5000/api/auth/google/callback"
+    else:
+        redirect_uri = "https://market-master-ai.onrender.com/api/auth/google/callback"
+
     token_url, headers, body = client.prepare_token_request(
         token_endpoint,
         authorization_response=request.url,
@@ -422,7 +457,7 @@ def auth_google_callback():
         client_id=GOOGLE_CLIENT_ID,
         client_secret=GOOGLE_CLIENT_SECRET
     )
-    
+
     token_response = requests.post(
         token_url,
         headers=headers,
@@ -441,7 +476,6 @@ def auth_google_callback():
     userinfo_response = requests.get(uri, headers=headers)
 
     if userinfo_response.json().get("email_verified"):
-        unique_id = userinfo_response.json()["sub"]
         users_email = userinfo_response.json()["email"]
         picture = userinfo_response.json()["picture"]
         users_name = userinfo_response.json()["given_name"]
@@ -454,10 +488,34 @@ def auth_google_callback():
     if not user:
         database.create_user(users_email, "google-oauth", users_name, users_name, last_name, picture)
 
-    session["user_email"] = users_email
-    
-    # Redirect back to the frontend with success
-    return redirect("http://localhost:5173/login?google_login=success")
+    frontend_origin = session.get("oauth_frontend_origin", "https://market-master-ai-rust.vercel.app")
+
+    if "localhost" in request.host or "127.0.0.1" in request.host:
+        # Local: set session cookie directly and redirect
+        session["user_email"] = users_email
+        return redirect(f"{frontend_origin}/login?google_login=success")
+    else:
+        # Production: cross-domain cookie won't work.
+        # Generate a short-lived one-time token and pass it in the redirect URL.
+        # The frontend will exchange it for a real session via /api/auth/google/token-exchange.
+        ott = _generate_oauth_token(users_email)
+        return redirect(f"{frontend_origin}/login?google_login=success&ott={ott}")
+
+
+@app.route("/api/auth/google/token-exchange", methods=["POST"])
+def google_token_exchange():
+    """Exchange a one-time token (generated after Google OAuth) for a real Flask session."""
+    data = request.get_json() or {}
+    ott = data.get("token", "")
+    email = _consume_oauth_token(ott)
+    if not email:
+        return jsonify({"error": "Invalid or expired token"}), 401
+    user = database.get_user(email)
+    if not user:
+        return jsonify({"error": "User not found"}), 404
+    session["user_email"] = email
+    user_data = {k: v for k, v in user.items() if k != "password"}
+    return jsonify({"success": True, "user": {**user_data, "email": email}})
 
 
 # ── AI Generation endpoints ──────────────────────────────────────────────────
@@ -479,7 +537,6 @@ def health_check():
         }
     })
 
-# ─── History Endpoints ───────────────────────────────────────────────────────
 
 @app.route("/api/history", methods=["GET"])
 def get_history():
@@ -1916,259 +1973,6 @@ def delete_knowledge(doc_id):
     return jsonify({"success": success})
 
 
-# ── v3 Market Analyzer Endpoints ──────────────────────────────────────────────
-
-@app.route("/api/v2/market/summary", methods=["GET"])
-def v2_market_summary():
-    if "user_email" not in session:
-        return jsonify({"error": "Not authenticated"}), 401
-    
-    email = session["user_email"]
-    workspace = database.get_or_create_workspace(email)
-    ws_id = workspace["id"]
-    
-    size = database.get_market_size(ws_id)
-    competitors = database.get_competitor_profiles(ws_id)
-    opportunities = database.get_market_opportunities(ws_id)
-    recommendations = database.get_strategic_recommendations(ws_id)
-    
-    reports = database.get_analysis_reports(email, module="market", limit=1)
-    latest_data = {}
-    if reports:
-        latest_data = reports[0].get("result_json", {})
-    
-    # Sensible defaults if no analysis has been run yet
-    market_size_data = {
-        "currency": size["currency"] if size else "USD",
-        "tam": size["tam_value"] if size else 0.0,
-        "sam": size["sam_value"] if size else 0.0,
-        "som": size["som_value"] if size else 0.0,
-        "growth_rate_cagr": size["growth_rate_cagr"] if size else 0.0,
-        "source_documentation": size["source_documentation"] if size else ""
-    }
-    
-    return jsonify({
-        "success": True,
-        "workspace": {
-            "id": ws_id,
-            "company_name": workspace["company_name"],
-            "industry": workspace["industry"],
-            "sub_industry": workspace["sub_industry"],
-            "hq_country": workspace["hq_country"],
-            "geo_market": workspace["geo_market"],
-            "business_model": workspace["business_model"],
-            "target_customer": workspace["target_customer"],
-            "founded_year": workspace["founded_year"]
-        },
-        "market_size": market_size_data,
-        "competitors": competitors,
-        "opportunities": opportunities,
-        "recommendations": recommendations,
-        # Merged rich dynamic fields from the latest run:
-        "swot": latest_data.get("swot", {}),
-        "pestel": latest_data.get("pestel", {}),
-        "trends": latest_data.get("trends", []),
-        "radar_data": latest_data.get("radar_data", []),
-        "growth_chart_data": latest_data.get("growth_chart_data", []),
-        "advertising_analysis": latest_data.get("advertising_analysis", []),
-        "positioning_postures": latest_data.get("positioning_postures", [])
-    })
-
-
-@app.route("/api/v2/market/analyze", methods=["POST"])
-def v2_market_analyze():
-    if "user_email" not in session:
-        return jsonify({"error": "Not authenticated"}), 401
-        
-    email = session["user_email"]
-    workspace = database.get_or_create_workspace(email)
-    ws_id = workspace["id"]
-    
-    body = request.get_json() or {}
-    industry = body.get("industry", workspace["industry"] or "Technology")
-    product_category = body.get("product_category", workspace["sub_industry"] or "Software")
-    target_market = body.get("target_market", workspace["geo_market"] or "Global")
-    competitors_raw = body.get("competitors", "")
-    
-    try:
-        from agents import run_market_analysis
-        grounding_context, company_name, company_industry = build_company_context(email, "market")
-        
-        result = run_market_analysis(
-            industry=industry,
-            product_category=product_category,
-            target_market=target_market,
-            competitors_raw=competitors_raw,
-            time_horizon="12 months",
-            grounding_context=grounding_context,
-            company_name=company_name,
-            company_industry=company_industry,
-        )
-        
-        agent_data = result.get("data", {})
-        
-        # Save Sizing to Database Sizing Table (with descriptive amount parser)
-        import re, random
-        def parse_amount(text):
-            if not text: return None
-            text_clean = re.sub(r'[^\d\.\,KkMmBb]', '', str(text))
-            if not text_clean: return None
-            match = re.search(r'([\d\.]+)', text_clean)
-            if not match: return None
-            val = float(match.group(1))
-            if 'b' in text_clean.lower():
-                val *= 1.0e9
-            elif 'm' in text_clean.lower():
-                val *= 1.0e6
-            elif 'k' in text_clean.lower():
-                val *= 1.0e3
-            return val
-
-        size_obj = agent_data.get("market_size", {})
-        tam_val = parse_amount(size_obj.get("current"))
-        if not tam_val or tam_val <= 0:
-            tam_base = 2500000000.0 if ("software" in industry.lower() or "tech" in industry.lower()) else 1000000000.0
-            tam_val = round(tam_base * random.uniform(0.8, 1.5), 2)
-        
-        sam_val = parse_amount(size_obj.get("projected"))
-        if not sam_val or sam_val <= 0:
-            sam_val = round(tam_val * random.uniform(0.3, 0.45), 2)
-            
-        som_val = round(sam_val * random.uniform(0.1, 0.25), 2)
-        
-        cagr_str = size_obj.get("cagr", "")
-        match_cagr = re.search(r'([\d\.]+)', cagr_str)
-        cagr_val = float(match_cagr.group(1)) if match_cagr else round(random.uniform(5.5, 14.5), 2)
-        
-        # Save Sizing
-        database.save_market_size(
-            workspace_id=ws_id,
-            tam_value=tam_val,
-            sam_value=sam_val,
-            som_value=som_val,
-            growth_rate_cagr=cagr_val,
-            source_documentation=size_obj.get("source_documentation", f"Automated AI Sizing Engine via Llama-3-70B based on {industry} and regional data."),
-            currency=size_obj.get("currency", "USD")
-        )
-        
-        # Save Competitors
-        competitors = agent_data.get("competitors", [])
-        if competitors:
-            for idx, c in enumerate(competitors):
-                share = round(random.uniform(5.0, 25.0), 2)
-                threat = c.get("threat_level", "Medium")
-                database.save_competitor_profile(
-                    workspace_id=ws_id,
-                    name=c.get("name"),
-                    market_share_pct=share,
-                    strengths=[c.get("strengths")],
-                    weaknesses=[c.get("weaknesses")],
-                    threat_level=threat,
-                    innovation_score=int(random.uniform(60, 95)),
-                    pricing_score=int(random.uniform(50, 90)),
-                    reach_score=int(random.uniform(40, 85)),
-                    support_score=int(random.uniform(55, 90)),
-                    quality_score=int(random.uniform(65, 95))
-                )
-                
-        # Save Opportunities
-        opps = agent_data.get("opportunities", [])
-        if opps:
-            for o in opps:
-                database.save_market_opportunity(
-                    workspace_id=ws_id,
-                    title=o.get("title", ""),
-                    description=o.get("revenue_potential", o.get("title", "")),
-                    impact_score=int(o.get("score", random.choice([5,6,7,8,9]))),
-                    effort_score=4 if o.get("effort") == "Low" else (6 if o.get("effort") == "Medium" else 8),
-                    estimated_revenue=parse_amount(o.get("revenue_potential")) or 0.0,
-                    target_audience=workspace["target_customer"] or "Target segment",
-                    required_capabilities=[],
-                    status="discovered"
-                )
-                
-        # Archive as structured Analysis Report in history database
-        report_id = database.save_analysis_report(
-            email=email,
-            module="market",
-            title=f"Market Sizing: {industry} — {company_name or email}",
-            input_dict=body,
-            result_dict=agent_data,
-            confidence_score=result.get("confidence_score", 0),
-        )
-        
-        database.log_activity(
-            email=email,
-            activity_type="market_analyzed",
-            title=f"Analyzed {industry} market sizing",
-            metadata={"industry": industry, "report_id": report_id}
-        )
-        
-        return jsonify({
-            "success": True,
-            "message": "Market intelligence analysis completed successfully via LangGraph agent.",
-            "report_id": report_id
-        })
-    except Exception as e:
-        return jsonify({"error": str(e)}), 500
-
-
-@app.route("/api/v2/market/simulate", methods=["POST"])
-def v2_market_simulate():
-    if "user_email" not in session:
-        return jsonify({"error": "Not authenticated"}), 401
-        
-    email = session["user_email"]
-    workspace = database.get_or_create_workspace(email)
-    ws_id = workspace["id"]
-    
-    body = request.get_json() or {}
-    avg_deal_size_modifier = float(body.get("avg_deal_size_modifier", 1.0))
-    sales_cycle_days_modifier = float(body.get("sales_cycle_days_modifier", 1.0))
-    
-    # Fetch SOM value as baseline
-    size = database.get_market_size(ws_id)
-    som = size["som_value"] if size else 5000000.0
-    
-    # Calculate modifiers
-    deal_multiplier = avg_deal_size_modifier
-    cycle_multiplier = 1.0 / sales_cycle_days_modifier if sales_cycle_days_modifier > 0 else 1.0
-    total_multiplier = deal_multiplier * cycle_multiplier
-    
-    # Shift simulated projections
-    baseline_projection = som
-    simulated_projection = round(som * total_multiplier, 2)
-    
-    chart_data = []
-    for m in range(1, 13):
-        m_base = round((som / 12) * m, 2)
-        m_sim = round(m_base * total_multiplier, 2)
-        chart_data.append({
-            "month": f"M{m}",
-            "baseline": m_base,
-            "simulated": m_sim
-        })
-        
-    simulation_output = {
-        "baseline_projection_12m": baseline_projection,
-        "simulated_projection_12m": simulated_projection,
-        "growth_multiplier": round(total_multiplier, 3),
-        "simulation_chart": chart_data
-    }
-    
-    sim_id = database.save_growth_simulation(
-        workspace_id=ws_id,
-        simulation_name=f"Modifier simulation: Deal={avg_deal_size_modifier}x Cycle={sales_cycle_days_modifier}x",
-        input_parameters=body,
-        simulation_output=simulation_output
-    )
-    
-    return jsonify({
-        "success": True,
-        "simulation_id": sim_id,
-        **simulation_output
-    })
-
 
 # ── Share Link Endpoints ──────────────────────────────────────────────────────
 
@@ -3179,9 +2983,6 @@ def delete_logo_history(record_id):
     return jsonify({"success": success})
 
 
-
-
-
 if __name__ == "__main__":
     if not GROQ_API_KEY:
         print("\n⚠️  WARNING: GROQ_API_KEY not found in environment variables!")
@@ -3192,5 +2993,5 @@ if __name__ == "__main__":
         print("   ⛓️  LangChain + LangGraph workflows compiled\n")
 
     print("🚀 MarketMind AI is starting...")
-    print("   Open http://localhost:5000 in your browser\n")
+    print("Open https://market-master-ai-rust.vercel.app in your browser\n")
     app.run(debug=True, port=5000, use_reloader=False)

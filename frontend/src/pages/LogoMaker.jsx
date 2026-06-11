@@ -102,6 +102,21 @@ export default function LogoMaker({ getCsrfToken }) {
         <div className="lg:col-span-3 space-y-6">
           <GlassCard className="border border-white/10 shadow-2xl relative" interactive={false}>
             <form onSubmit={handleGenerate} className="space-y-6">
+              <div>
+                <label className="block text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">
+                  Describe Your Logo Concept
+                </label>
+                <textarea
+                  value={prompt}
+                  onChange={(e) => setPrompt(e.target.value)}
+                  placeholder="e.g., A minimalist logo for a software startup featuring a clean mountain shape, geometric design, dark theme..."
+                  rows={4}
+                  className="w-full glass-input bg-surface-900/60 resize-none font-sans text-sm"
+                  required
+                  disabled={loading}
+                />
+              </div>
+
               {/* Suggestions */}
               <div>
                 <label className="block text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">
@@ -120,21 +135,6 @@ export default function LogoMaker({ getCsrfToken }) {
                     </button>
                   ))}
                 </div>
-              </div>
-
-              <div>
-                <label className="block text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">
-                  Describe Your Logo Concept
-                </label>
-                <textarea
-                  value={prompt}
-                  onChange={(e) => setPrompt(e.target.value)}
-                  placeholder="e.g., A minimalist logo for a software startup featuring a clean mountain shape, geometric design, dark theme..."
-                  rows={4}
-                  className="w-full glass-input bg-surface-900/60 resize-none font-sans text-sm"
-                  required
-                  disabled={loading}
-                />
               </div>
 
               <button

@@ -33,6 +33,7 @@ logs/
 backend_stderr.log
 backend/backend_stderr_*.log
 frontend/frontend.log
+backend/pdf_out.txt
 
 # Dependencies
 frontend/node_modules/

@@ -12,3 +12,5 @@ oauthlib
 requests-oauthlib
 python-docx
 markdown
+gunicorn
+psycopg2-binary
